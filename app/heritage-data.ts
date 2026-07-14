@@ -1,45 +1,15 @@
-export const artifact = {
-  name: "贾湖骨笛",
-  subtitle: "把九千年前的一缕清音，带回当代",
-  era: "新石器时代",
-  age: "距今约 9,000—7,800 年",
-  excavation: "1987 年",
-  location: "河南舞阳贾湖遗址 M282 号墓",
-  material: "鹤类禽鸟中空尺骨",
-  length: "23.6 厘米（馆藏规格）",
-  summary:
-    "贾湖遗址出土的骨笛，是一组年代早、保存状况突出且经过测音研究的多音孔吹奏乐器。它们让我们能够从实物、测音与考古层位三个维度，重新理解中国新石器时代早期的音乐实践。",
-  note:
-    "本页以河南博物院公开藏品信息与 1999 年《Nature》论文为基础。不同馆藏骨笛的尺寸、孔数和年代并不完全相同，展示时应避免把多件文物的信息混为一件。",
+export type ContentReviewStatus = "pending-expert-review" | "reviewed";
+
+export type ArtifactFact = {
+  label: string;
+  value: string;
 };
 
-export const timeline = [
-  {
-    year: "约公元前 7000—5700 年",
-    title: "贾湖先民生活于此",
-    text: "《Nature》论文将贾湖遗址的占用年代置于这一时期；多音孔骨笛来自有放射性碳测年的考古层位。",
-  },
-  {
-    year: "1984—1987 年",
-    title: "持续考古发掘",
-    text: "贾湖遗址开展多轮发掘，一批保存完整或残缺的骨笛陆续出土。",
-  },
-  {
-    year: "1987 年",
-    title: "M282 号墓骨笛出土",
-    text: "河南博物院公开资料记录：馆藏代表性骨笛出土于河南舞阳贾湖遗址 M282 号墓。",
-  },
-  {
-    year: "1999 年",
-    title: "研究发表于《Nature》",
-    text: "张居中等公布六支完整骨笛及测音结果，贾湖骨笛由此受到国际学界广泛关注。",
-  },
-  {
-    year: "今天",
-    title: "让文物可见、可听、可探索",
-    text: "数字展示让公众在不接触原件的前提下理解文物形制、历史语境与音乐价值。",
-  },
-];
+export type ArtifactTimelineItem = {
+  year: string;
+  title: string;
+  text: string;
+};
 
 export type QuestionAnswer = {
   question: string;
@@ -47,88 +17,225 @@ export type QuestionAnswer = {
   keywords: string[];
 };
 
-export const questionAnswers: QuestionAnswer[] = [
-  {
-    question: "贾湖骨笛是什么？",
-    answer:
-      "它是河南舞阳贾湖新石器时代遗址出土的一组骨质吹奏乐器。多件骨笛带有 5、6、7 或 8 个孔，部分完整标本经过实际测音研究。",
-    keywords: ["是什么", "介绍", "骨笛"],
-  },
-  {
-    question: "贾湖骨笛距今多久？",
-    answer:
-      "贾湖遗址的年代约为距今 9,000—7,800 年；具体到每一支骨笛，年代要结合其考古层位分别判断。",
-    keywords: ["多久", "多少年", "年代", "距今"],
-  },
-  {
-    question: "它在哪里出土？",
-    answer:
-      "骨笛出土于河南省漯河市舞阳县的贾湖遗址。河南博物院公开的代表性藏品来自 M282 号墓。",
-    keywords: ["哪里", "地点", "出土", "舞阳"],
-  },
-  {
-    question: "骨笛用什么材料制作？",
-    answer:
-      "研究与馆藏资料显示，贾湖骨笛以鹤类禽鸟中空的尺骨制作；论文对所研究标本的鉴定指向丹顶鹤尺骨。",
-    keywords: ["材料", "什么做", "尺骨", "鹤"],
-  },
-  {
-    question: "为什么它如此重要？",
-    answer:
-      "因为它同时具备年代早、考古层位清楚、保存较完整、可进行测音和多音孔等特点，为研究早期音乐实践提供了罕见的实物证据。",
-    keywords: ["重要", "价值", "意义", "为什么"],
-  },
-  {
-    question: "骨笛一共有几个孔？",
-    answer:
-      "不同标本并不相同，已见 5、6、7、8 孔等类型；河南博物院重点展示的 M282 号墓代表性骨笛为 7 孔。",
-    keywords: ["几个孔", "多少孔", "孔数", "七孔"],
-  },
-  {
-    question: "它现在还能吹奏吗？",
-    answer:
-      "1999 年论文记载，保存最好的一支骨笛曾被吹奏并进行音高分析。今天的文物展示应优先保护原件，演奏研究通常更适合使用复原件。",
-    keywords: ["吹奏", "还能吹", "演奏", "声音"],
-  },
-  {
-    question: "页面里的 3D 模型是真实扫描吗？",
-    answer:
-      "不是。当前是依据骨笛一般形态制作的程序化功能模型，只用于演示旋转、缩放和数字标注流程，不代表任何一件文物的精确扫描或复原。",
-    keywords: ["3d", "模型", "扫描", "真实"],
-  },
-  {
-    question: "演示音频是真实骨笛录音吗？",
-    answer:
-      "不是。当前音频为浏览器合成的占位音色，用于展示播放器功能，不应被用于说明贾湖骨笛的真实音色。",
-    keywords: ["音频", "录音", "音色", "音乐"],
-  },
-  {
-    question: "这个 AI 讲解员接入大模型了吗？",
-    answer:
-      "还没有。当前仅按关键词匹配本地预设答案，便于团队先验证交互形式；后续可在专业资料审校后接入带来源引用的知识库。",
-    keywords: ["ai", "大模型", "知识库", "rag", "讲解员"],
-  },
-];
+export type ArtifactSource = {
+  id: string;
+  name: string;
+  note: string;
+  href: string;
+};
 
-export const sources = [
+export type Artifact = {
+  id: string;
+  slug: string;
+  displayIndex: string;
+  name: string;
+  subtitle: string;
+  summary: string;
+  researchNote: string;
+  facts: ArtifactFact[];
+  timeline: ArtifactTimelineItem[];
+  questions: QuestionAnswer[];
+  assets: {
+    image: {
+      src: string;
+      alt: string;
+      label: string;
+      caption: string;
+      credit: string;
+    };
+    model: {
+      kind: "procedural-demo" | "glb";
+      ariaLabel: string;
+      warning: string;
+    };
+    audio: {
+      kind: "synthetic-demo" | "recording";
+      title: string;
+      description: string;
+      ariaLabel: string;
+    };
+  };
+  contentReview: {
+    status: ContentReviewStatus;
+    label: string;
+    sourceIds: string[];
+    lastUpdated: string;
+  };
+};
+
+export const artifactSources: ArtifactSource[] = [
   {
+    id: "henan-museum-jiahu",
     name: "河南博物院｜贾湖骨笛",
     note: "藏品规格、出土地点、形制与专家点评",
     href: "https://www.chnmus.net/ch/collection/treasure/details.html?id=508164979145447651",
   },
   {
+    id: "national-museum-bone-flute",
     name: "中国国家博物馆｜骨笛",
     note: "馆藏同类器的尺寸、孔数与工艺说明",
     href: "https://www.chnmuseum.cn/zp/zpml/kgfjp/202008/t20200824_247261.shtml",
   },
   {
+    id: "nature-1999-jiahu",
     name: "Nature 401, 366—368 (1999)",
     note: "考古年代、材质、完整标本与测音研究",
     href: "https://doi.org/10.1038/43865",
   },
   {
+    id: "commons-jiahu-photo",
     name: "Wikimedia Commons｜Jiahu Bone Flute",
     note: "页面照片，ASHillocks，CC BY-SA 4.0",
     href: "https://commons.wikimedia.org/wiki/File:Jiahu_Bone_Flute.jpg",
   },
 ];
+
+export const artifacts: Artifact[] = [
+  {
+    id: "artifact-001",
+    slug: "jiahu-bone-flute",
+    displayIndex: "001",
+    name: "贾湖骨笛",
+    subtitle: "把九千年前的一缕清音，带回当代",
+    summary:
+      "贾湖遗址出土的骨笛，是一组年代早、保存状况突出且经过测音研究的多音孔吹奏乐器。它们让我们能够从实物、测音与考古层位三个维度，重新理解中国新石器时代早期的音乐实践。",
+    researchNote:
+      "本页以河南博物院公开藏品信息与 1999 年《Nature》论文为基础。不同馆藏骨笛的尺寸、孔数和年代并不完全相同，展示时应避免把多件文物的信息混为一件。",
+    facts: [
+      { label: "时代", value: "新石器时代" },
+      { label: "年代", value: "距今约 9,000—7,800 年" },
+      { label: "出土", value: "1987 年" },
+      { label: "地点", value: "河南舞阳贾湖遗址 M282 号墓" },
+      { label: "材质", value: "鹤类禽鸟中空尺骨" },
+      { label: "规格", value: "23.6 厘米（馆藏规格）" },
+    ],
+    timeline: [
+      {
+        year: "约公元前 7000—5700 年",
+        title: "贾湖先民生活于此",
+        text: "《Nature》论文将贾湖遗址的占用年代置于这一时期；多音孔骨笛来自有放射性碳测年的考古层位。",
+      },
+      {
+        year: "1984—1987 年",
+        title: "持续考古发掘",
+        text: "贾湖遗址开展多轮发掘，一批保存完整或残缺的骨笛陆续出土。",
+      },
+      {
+        year: "1987 年",
+        title: "M282 号墓骨笛出土",
+        text: "河南博物院公开资料记录：馆藏代表性骨笛出土于河南舞阳贾湖遗址 M282 号墓。",
+      },
+      {
+        year: "1999 年",
+        title: "研究发表于《Nature》",
+        text: "张居中等公布六支完整骨笛及测音结果，贾湖骨笛由此受到国际学界广泛关注。",
+      },
+      {
+        year: "今天",
+        title: "让文物可见、可听、可探索",
+        text: "数字展示让公众在不接触原件的前提下理解文物形制、历史语境与音乐价值。",
+      },
+    ],
+    questions: [
+      {
+        question: "贾湖骨笛是什么？",
+        answer:
+          "它是河南舞阳贾湖新石器时代遗址出土的一组骨质吹奏乐器。多件骨笛带有 5、6、7 或 8 个孔，部分完整标本经过实际测音研究。",
+        keywords: ["是什么", "介绍"],
+      },
+      {
+        question: "贾湖骨笛距今多久？",
+        answer:
+          "贾湖遗址的年代约为距今 9,000—7,800 年；具体到每一支骨笛，年代要结合其考古层位分别判断。",
+        keywords: ["多久", "多少年", "年代", "距今"],
+      },
+      {
+        question: "它在哪里出土？",
+        answer:
+          "骨笛出土于河南省漯河市舞阳县的贾湖遗址。河南博物院公开的代表性藏品来自 M282 号墓。",
+        keywords: ["哪里", "地点", "出土", "舞阳"],
+      },
+      {
+        question: "骨笛用什么材料制作？",
+        answer:
+          "研究与馆藏资料显示，贾湖骨笛以鹤类禽鸟中空的尺骨制作；论文对所研究标本的鉴定指向丹顶鹤尺骨。",
+        keywords: ["材料", "什么做", "尺骨", "鹤"],
+      },
+      {
+        question: "为什么它如此重要？",
+        answer:
+          "因为它同时具备年代早、考古层位清楚、保存较完整、可进行测音和多音孔等特点，为研究早期音乐实践提供了罕见的实物证据。",
+        keywords: ["重要", "价值", "意义", "为什么"],
+      },
+      {
+        question: "骨笛一共有几个孔？",
+        answer:
+          "不同标本并不相同，已见 5、6、7、8 孔等类型；河南博物院重点展示的 M282 号墓代表性骨笛为 7 孔。",
+        keywords: ["几个孔", "多少孔", "孔数", "七孔"],
+      },
+      {
+        question: "它现在还能吹奏吗？",
+        answer:
+          "1999 年论文记载，保存最好的一支骨笛曾被吹奏并进行音高分析。今天的文物展示应优先保护原件，演奏研究通常更适合使用复原件。",
+        keywords: ["吹奏", "还能吹", "演奏", "声音"],
+      },
+      {
+        question: "页面里的 3D 模型是真实扫描吗？",
+        answer:
+          "不是。当前是依据骨笛一般形态制作的程序化功能模型，只用于演示旋转、缩放和数字标注流程，不代表任何一件文物的精确扫描或复原。",
+        keywords: ["3d", "模型", "扫描", "真实"],
+      },
+      {
+        question: "演示音频是真实骨笛录音吗？",
+        answer:
+          "不是。当前音频为浏览器合成的占位音色，用于展示播放器功能，不应被用于说明贾湖骨笛的真实音色。",
+        keywords: ["音频", "录音", "音色", "音乐"],
+      },
+      {
+        question: "这个 AI 讲解员接入大模型了吗？",
+        answer:
+          "还没有。当前仅按关键词匹配本地预设答案，便于团队先验证交互形式；后续可在专业资料审校后接入带来源引用的知识库。",
+        keywords: ["ai", "大模型", "知识库", "rag", "讲解员"],
+      },
+    ],
+    assets: {
+      image: {
+        src: "/jiahu-bone-flute.jpg",
+        alt: "贾湖遗址出土骨笛的同类文物参考照片",
+        label: "参考图像",
+        caption: "同类文物照片，摄于漯河市博物馆；非 M282:20 单件的精确对应。",
+        credit: "ASHillocks / Wikimedia Commons / CC BY-SA 4.0",
+      },
+      model: {
+        kind: "procedural-demo",
+        ariaLabel: "可旋转的骨笛功能演示模型",
+        warning: "功能演示模型 · 非文物扫描 · 不代表真实比例、纹理与复原结论",
+      },
+      audio: {
+        kind: "synthetic-demo",
+        title: "听见远古 · 合成音色占位演示",
+        description: "用于验证播放、进度和音量控制；不是贾湖骨笛原件或复原件录音。",
+        ariaLabel: "合成占位演示音频",
+      },
+    },
+    contentReview: {
+      status: "pending-expert-review",
+      label: "待专业成员审核",
+      sourceIds: [
+        "henan-museum-jiahu",
+        "national-museum-bone-flute",
+        "nature-1999-jiahu",
+        "commons-jiahu-photo",
+      ],
+      lastUpdated: "2026-07-14",
+    },
+  },
+];
+
+export const featuredArtifact = artifacts[0];
+
+export function getSourcesForArtifact(artifact: Artifact): ArtifactSource[] {
+  return artifact.contentReview.sourceIds
+    .map((sourceId) => artifactSources.find((source) => source.id === sourceId))
+    .filter((source): source is ArtifactSource => Boolean(source));
+}

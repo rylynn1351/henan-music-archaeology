@@ -299,6 +299,18 @@ section[id] {
   margin-top: 34px;
 }
 
+.concept-disclaimer {
+  width: fit-content;
+  margin: 18px 0 0;
+  padding: 7px 10px;
+  color: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(9, 19, 15, 0.38);
+  font-size: 10px;
+  line-height: 1.5;
+  letter-spacing: 0.08em;
+}
+
 .button {
   display: inline-flex;
   min-height: 48px;
@@ -534,6 +546,59 @@ section[id] {
   font-size: 14px;
 }
 
+.artifact-provenance {
+  display: grid;
+  gap: 0;
+  margin-top: 24px;
+  border: 1px solid #d3c9b8;
+  background: rgba(255, 255, 255, 0.42);
+}
+
+.artifact-provenance > div {
+  display: grid;
+  grid-template-columns: 108px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+  padding: 12px 14px;
+  border-bottom: 1px solid #ddd4c5;
+}
+
+.artifact-provenance > div:last-child {
+  border-bottom: 0;
+}
+
+.artifact-provenance > div > span {
+  color: #8a8d88;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+}
+
+.artifact-provenance strong,
+.artifact-provenance p,
+.artifact-provenance time {
+  margin: 0;
+  color: #394740;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.7;
+}
+
+.artifact-provenance strong::before {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 7px;
+  content: "";
+  background: #c07a39;
+  border-radius: 50%;
+  vertical-align: 1px;
+}
+
+.artifact-provenance a {
+  color: #9f4934;
+  border-bottom: 1px solid rgba(159, 73, 52, 0.28);
+}
+
 .research-note {
   margin-top: 28px;
   padding: 20px 22px;
@@ -650,6 +715,7 @@ section[id] {
 
 .viewer-column,
 .feature-column {
+  min-width: 0;
   background: #e8e0d2;
 }
 
@@ -729,8 +795,17 @@ section[id] {
   z-index: 1;
   width: 100%;
   height: 100%;
+  min-width: 0;
+  overflow: hidden;
   cursor: grab;
   touch-action: none;
+}
+
+.viewer-canvas canvas {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
 }
 
 .viewer-canvas:active {
@@ -1341,6 +1416,11 @@ footer p {
     margin-top: 26px;
   }
 
+  .concept-disclaimer {
+    margin-top: 14px;
+    font-size: 9px;
+  }
+
   .button {
     min-height: 44px;
     padding: 0 17px;
@@ -1412,6 +1492,11 @@ footer p {
 
   .artifact-details dl > div {
     grid-template-columns: 64px 1fr;
+  }
+
+  .artifact-provenance > div {
+    grid-template-columns: 94px minmax(0, 1fr);
+    gap: 10px;
   }
 
   .timeline {

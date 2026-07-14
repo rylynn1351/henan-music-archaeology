@@ -3,14 +3,21 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-import { artifact, questionAnswers, sources, timeline } from "./heritage-data";
+import ArtifactDetail from "./ArtifactDetail";
+import {
+  artifactSources,
+  featuredArtifact,
+  getSourcesForArtifact,
+  type Artifact,
+  type QuestionAnswer,
+} from "./heritage-data";
 
 type Message = {
   role: "guide" | "visitor";
   text: string;
 };
 
-function BoneFluteViewer() {
+function BoneFluteViewer({ ariaLabel }: { ariaLabel: string }) {
   const mountRef = useRef<HTMLDivElement>(null);
   const controlsRef = useRef<OrbitControls | null>(null);
 
@@ -91,28 +98,47 @@ function BoneFluteViewer() {
     controls.autoRotateSpeed = 0.75;
     controlsRef.current = controls;
 
+    let renderedWidth = 0;
+    let renderedHeight = 0;
     const resize = () => {
-      const width = mount.clientWidth;
-      const height = mount.clientHeight;
+      const width = Math.round(mount.clientWidth);
+      const height = Math.round(mount.clientHeight);
+      if (width === renderedWidth && height === renderedHeight) return;
+      renderedWidth = width;
+      renderedHeight = height;
       renderer.setSize(width, height, false);
       camera.aspect = width / Math.max(height, 1);
       camera.updateProjectionMatrix();
     };
     resize();
-    const observer = new ResizeObserver(resize);
-    observer.observe(mount);
+    const resizeObserver = new ResizeObserver(resize);
+    resizeObserver.observe(mount);
 
     let animationFrame = 0;
+    let isVisible = false;
     const animate = () => {
+      if (!isVisible) {
+        animationFrame = 0;
+        return;
+      }
       controls.update();
       renderer.render(scene, camera);
       animationFrame = requestAnimationFrame(animate);
     };
-    animate();
+    const visibilityObserver = new IntersectionObserver(
+      ([entry]) => {
+        isVisible = entry.isIntersecting;
+        if (isVisible && animationFrame === 0) animate();
+      },
+      { rootMargin: "120px 0px" },
+    );
+    visibilityObserver.observe(mount);
+    renderer.render(scene, camera);
 
     return () => {
       cancelAnimationFrame(animationFrame);
-      observer.disconnect();
+      resizeObserver.disconnect();
+      visibilityObserver.disconnect();
       controls.dispose();
       renderer.dispose();
       body.geometry.dispose();
@@ -131,7 +157,7 @@ function BoneFluteViewer() {
 
   return (
     <div className="viewer-shell">
-      <div ref={mountRef} className="viewer-canvas" aria-label="可旋转的骨笛功能演示模型" />
+      <div ref={mountRef} className="viewer-canvas" aria-label={ariaLabel} />
       <div className="viewer-overlay">
         <span>拖动旋转 · 滚轮或双指缩放</span>
         <button type="button" onClick={resetView} aria-label="重置 3D 模型视角">
@@ -189,7 +215,7 @@ function createDemoWave(): Blob {
   return new Blob([view], { type: "audio/wav" });
 }
 
-function AudioExperience() {
+function AudioExperience({ audio }: { audio: Artifact["assets"]["audio"] }) {
   const [audioUrl, setAudioUrl] = useState("");
 
   useEffect(() => {
@@ -207,15 +233,15 @@ function AudioExperience() {
       </div>
       <div className="audio-copy">
         <span className="eyebrow light">声音实验 01</span>
-        <h3>听见远古 · 合成音色占位演示</h3>
-        <p>用于验证播放、进度和音量控制；不是贾湖骨笛原件或复原件录音。</p>
-        {audioUrl ? <audio controls preload="metadata" src={audioUrl} aria-label="合成占位演示音频" /> : null}
+        <h3>{audio.title}</h3>
+        <p>{audio.description}</p>
+        {audioUrl ? <audio controls preload="metadata" src={audioUrl} aria-label={audio.ariaLabel} /> : null}
       </div>
     </div>
   );
 }
 
-function GuideChat() {
+function GuideChat({ questions }: { questions: QuestionAnswer[] }) {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "guide",
@@ -227,9 +253,11 @@ function GuideChat() {
   const ask = (question: string) => {
     const normalized = question.trim().toLowerCase();
     if (!normalized) return;
-    const match = questionAnswers.find((item) =>
-      item.keywords.some((keyword) => normalized.includes(keyword.toLowerCase())),
-    );
+    const match =
+      questions.find((item) => item.question.trim().toLowerCase() === normalized) ??
+      questions.find((item) =>
+        item.keywords.some((keyword) => normalized.includes(keyword.toLowerCase())),
+      );
     const answer =
       match?.answer ?? "现有资料暂未收录该问题，请等待专业成员补充。你也可以试试下方的推荐问题。";
     setMessages((current) => [
@@ -262,7 +290,7 @@ function GuideChat() {
         ))}
       </div>
       <div className="suggested-questions">
-        {questionAnswers.slice(0, 5).map((item) => (
+        {questions.slice(0, 5).map((item) => (
           <button type="button" onClick={() => ask(item.question)} key={item.question}>
             {item.question}
           </button>
@@ -283,6 +311,9 @@ function GuideChat() {
 }
 
 export default function HeritageDemo() {
+  const artifact = featuredArtifact;
+  const sources = getSourcesForArtifact(artifact);
+
   return (
     <main>
       <header className="site-header">
@@ -303,7 +334,7 @@ export default function HeritageDemo() {
         <div className="hero-image" aria-hidden="true" />
         <div className="hero-shade" />
         <div className="hero-content">
-          <div className="project-badge"><span /> 2026 大学生创新训练计划 · 国家级推荐</div>
+          <div className="project-badge"><span /> 2026 大学生创新训练计划 · 项目概念验证</div>
           <p className="hero-kicker">A DIGITAL ECHO OF ANCIENT HENAN</p>
           <h1>一管骨笛<br /><em>九千年回响</em></h1>
           <p className="hero-lead">
@@ -314,44 +345,17 @@ export default function HeritageDemo() {
             <a className="button primary" href="#artifact">开始探索 <span>→</span></a>
             <a className="button ghost" href="#experience">体验 3D 展示</a>
           </div>
+          <p className="concept-disclaimer">当前为概念验证Demo，非最终研究成果</p>
           <div className="hero-stats">
             <div><strong>约 9000</strong><span>年前 · 早期标本</span></div>
             <div><strong>30+</strong><span>支 · 多轮发掘记录</span></div>
-            <div><strong>5—8</strong><span>孔 · 多种形制</span></div>
+            <div><strong>多种孔数</strong><span>· 形制丰富</span></div>
           </div>
         </div>
         <div className="scroll-cue"><span /> 向下探索</div>
       </section>
 
-      <section className="section artifact-section" id="artifact">
-        <div className="section-heading split-heading">
-          <div><span className="eyebrow">01 · 文物档案</span><h2>{artifact.name}</h2></div>
-          <p>{artifact.summary}</p>
-        </div>
-        <div className="artifact-grid">
-          <figure className="artifact-photo">
-            <img src="/jiahu-bone-flute.jpg" alt="贾湖遗址出土骨笛的同类文物参考照片" />
-            <figcaption>
-              <span>参考图像</span>
-              同类文物照片，摄于漯河市博物馆；非 M282:20 单件的精确对应。<br />
-              ASHillocks / Wikimedia Commons / CC BY-SA 4.0
-            </figcaption>
-          </figure>
-          <div className="artifact-details">
-            <span className="big-index">NO. 001</span>
-            <h3>{artifact.subtitle}</h3>
-            <dl>
-              <div><dt>时代</dt><dd>{artifact.era}</dd></div>
-              <div><dt>年代</dt><dd>{artifact.age}</dd></div>
-              <div><dt>出土</dt><dd>{artifact.excavation}</dd></div>
-              <div><dt>地点</dt><dd>{artifact.location}</dd></div>
-              <div><dt>材质</dt><dd>{artifact.material}</dd></div>
-              <div><dt>规格</dt><dd>{artifact.length}</dd></div>
-            </dl>
-            <div className="research-note"><strong>研究提示</strong><p>{artifact.note}</p></div>
-          </div>
-        </div>
-      </section>
+      <ArtifactDetail artifact={artifact} sources={sources} />
 
       <section className="timeline-section" id="timeline">
         <div className="section timeline-inner">
@@ -360,7 +364,7 @@ export default function HeritageDemo() {
             <p>不是把历史压缩成一句“最早”，而是让文物重新回到考古层位、研究过程与公共传播的时间脉络中。</p>
           </div>
           <div className="timeline">
-            {timeline.map((item, index) => (
+            {artifact.timeline.map((item, index) => (
               <article key={item.year} className="timeline-item">
                 <span className="timeline-number">{String(index + 1).padStart(2, "0")}</span>
                 <time>{item.year}</time>
@@ -380,8 +384,8 @@ export default function HeritageDemo() {
         <div className="experience-grid">
           <div className="viewer-column">
             <div className="card-label"><span>3D</span><div><strong>骨笛形制 · 交互模型</strong><small>THREE.JS PROCEDURAL DEMO</small></div></div>
-            <BoneFluteViewer />
-            <p className="demo-warning">功能演示模型 · 非文物扫描 · 不代表真实比例、纹理与复原结论</p>
+            <BoneFluteViewer ariaLabel={artifact.assets.model.ariaLabel} />
+            <p className="demo-warning">{artifact.assets.model.warning}</p>
           </div>
           <div className="feature-column">
             <article><span>01</span><div><h3>旋转观察</h3><p>从不同角度查看管身、端部与音孔排列。</p></div></article>
@@ -390,7 +394,7 @@ export default function HeritageDemo() {
             <div className="next-model"><span>下一步</span><strong>接入团队自采 .glb 模型</strong><p>保留当前交互层，只替换有明确来源与授权的模型资产。</p></div>
           </div>
         </div>
-        <AudioExperience />
+        <AudioExperience audio={artifact.assets.audio} />
       </section>
 
       <section className="guide-section" id="guide">
@@ -405,7 +409,7 @@ export default function HeritageDemo() {
               <li><span>✓</span> 后续可接入经专家审校的资料库</li>
             </ul>
           </div>
-          <GuideChat />
+          <GuideChat questions={artifact.questions} />
         </div>
       </section>
 
@@ -415,7 +419,7 @@ export default function HeritageDemo() {
           <p>内容与素材分开记录来源；产品结构参考开源项目，但不复制其品牌、样例数据或后台复杂度。</p>
         </div>
         <div className="source-grid">
-          {sources.map((source, index) => (
+          {artifactSources.map((source, index) => (
             <a href={source.href} target="_blank" rel="noreferrer" key={source.name}>
               <span>{String(index + 1).padStart(2, "0")}</span>
               <div><strong>{source.name}</strong><small>{source.note}</small></div>
@@ -431,8 +435,8 @@ export default function HeritageDemo() {
 
       <footer>
         <div className="brand footer-brand"><span className="brand-seal">豫</span><span><strong>豫音焕新声</strong><small>让河南音乐文物重新发声</small></span></div>
-        <p>郑州大学 2026 大学生创新训练计划 · 演示模型</p>
-        <span>内容待音乐学、考古学成员持续审校</span>
+        <p>郑州大学 2026 大学生创新训练计划 · v0.2 演示模型</p>
+        <span>当前为概念验证Demo，非最终研究成果 · 内容待音乐学、考古学成员持续审校</span>
       </footer>
     </main>
   );
