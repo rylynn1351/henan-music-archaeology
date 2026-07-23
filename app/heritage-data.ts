@@ -1,69 +1,203 @@
-export type ContentReviewStatus = "pending-expert-review" | "reviewed";
+export type ContentClassification =
+  | "archaeological_fact"
+  | "research_hypothesis"
+  | "digital_demonstration"
+  | "artistic_creation";
+
+export type ReviewStatus =
+  | "placeholder"
+  | "draft"
+  | "under_review"
+  | "approved"
+  | "published";
+
+export type AudioClassification =
+  | "original_artifact_recording"
+  | "reconstructed_instrument"
+  | "experimental_simulation"
+  | "digitally_synthesized";
+
+export type ModelClassification =
+  | "real_scan"
+  | "research_reconstruction"
+  | "programmatic_demo"
+  | "artistic_creation";
+
+export type AssetAuthorizationStatus =
+  | "unknown"
+  | "pending"
+  | "open_license"
+  | "authorized"
+  | "internal_only"
+  | "not_applicable";
+
+export type ArtifactCatalogVisibility = "internal" | "demo" | "public";
+
+export type ArtifactFilterCriteria = {
+  query?: string;
+  period?: string;
+  material?: string;
+  artifactType?: string;
+};
+
+export type ArtifactFilterOptions = {
+  periods: string[];
+  materials: string[];
+  artifactTypes: string[];
+};
 
 export type ArtifactFact = {
   label: string;
   value: string;
 };
 
-export type ArtifactTimelineItem = {
+export type TimelineItem = {
   year: string;
   title: string;
   text: string;
 };
 
-export type QuestionAnswer = {
+export type GuideQuestion = {
   question: string;
   answer: string;
   keywords: string[];
 };
 
-export type ArtifactSource = {
+export type SourceReference = {
   id: string;
   name: string;
-  note: string;
-  href: string;
+  note?: string;
+  href?: string;
+};
+
+export type ArtifactImage = {
+  id: string;
+  src: string;
+  alt: string;
+  label?: string;
+  caption?: string;
+  credit?: string;
+  sourceId?: string;
+  license?: string;
+  authorizationStatus?: AssetAuthorizationStatus;
+  width?: number;
+  height?: number;
+  isPrimary?: boolean;
+};
+
+export type ArtifactModelHotspot = {
+  id: string;
+  name: string;
+  position?: [number, number, number];
+  description?: string;
+  audioId?: string;
+  sourceId?: string;
+};
+
+export type ArtifactModel = {
+  classification: ModelClassification;
+  glbPath?: string;
+  hasRealFile: boolean;
+  hotspots?: ArtifactModelHotspot[];
+  sourceId?: string;
+  authorizationStatus?: AssetAuthorizationStatus;
+  fallbackImageId?: string;
+  ariaLabel?: string;
+  notice?: string;
+};
+
+export type ArtifactAudio = {
+  id: string;
+  name: string;
+  classification: AudioClassification;
+  filePath?: string;
+  isBrowserGenerated: boolean;
+  relatedHotspotId?: string;
+  sourceId?: string;
+  authorizationStatus?: AssetAuthorizationStatus;
+  description?: string;
+  ariaLabel?: string;
+};
+
+export type ArtifactHighlight = {
+  value: string;
+  label: string;
 };
 
 export type Artifact = {
   id: string;
   slug: string;
-  displayIndex: string;
   name: string;
-  subtitle: string;
-  summary: string;
-  researchNote: string;
-  facts: ArtifactFact[];
-  timeline: ArtifactTimelineItem[];
-  questions: QuestionAnswer[];
-  assets: {
-    image: {
-      src: string;
-      alt: string;
-      label: string;
-      caption: string;
-      credit: string;
-    };
-    model: {
-      kind: "procedural-demo" | "glb";
-      ariaLabel: string;
-      warning: string;
-    };
-    audio: {
-      kind: "synthetic-demo" | "recording";
-      title: string;
-      description: string;
-      ariaLabel: string;
-    };
-  };
-  contentReview: {
-    status: ContentReviewStatus;
-    label: string;
-    sourceIds: string[];
-    lastUpdated: string;
-  };
+  displayIndex?: string;
+  subtitle?: string;
+
+  period?: string;
+  dateDescription?: string;
+  discoveryDate?: string;
+  material?: string;
+  artifactType?: string;
+  discoveryLocation?: string;
+  currentCollection?: string;
+  dimensions?: string;
+
+  summary?: string;
+  detailedDescription?: string;
+  researchNote?: string;
+  additionalFacts?: ArtifactFact[];
+  highlights?: ArtifactHighlight[];
+
+  images?: ArtifactImage[];
+  timeline?: TimelineItem[];
+  sources?: SourceReference[];
+  questions?: GuideQuestion[];
+  model?: ArtifactModel;
+  audio?: ArtifactAudio[];
+
+  tags?: string[];
+  relatedArtifactIds?: string[];
+
+  contentClassification: ContentClassification;
+  reviewStatus: ReviewStatus;
+  reviewer?: string;
+  reviewedAt?: string;
+  updatedAt?: string;
+
+  assetNotices?: string[];
+  isDemo: boolean;
+  isPlaceholder?: boolean;
+  catalogVisibility?: ArtifactCatalogVisibility;
 };
 
-export const artifactSources: ArtifactSource[] = [
+const CONTENT_CLASSIFICATION_LABELS = {
+  archaeological_fact: "考古事实",
+  research_hypothesis: "研究推测",
+  digital_demonstration: "数字演示",
+  artistic_creation: "艺术创作",
+} satisfies Record<ContentClassification, string>;
+
+const REVIEW_STATUS_LABELS = {
+  placeholder: "占位资料",
+  draft: "待专业成员审核",
+  under_review: "审核中",
+  approved: "已审核",
+  published: "已发布",
+} satisfies Record<ReviewStatus, string>;
+
+const AUDIO_CLASSIFICATION_LABELS = {
+  original_artifact_recording: "原器录音",
+  reconstructed_instrument: "复原乐器演奏",
+  experimental_simulation: "实验模拟",
+  digitally_synthesized: "数字合成",
+} satisfies Record<AudioClassification, string>;
+
+const MODEL_CLASSIFICATION_LABELS = {
+  real_scan: "真实扫描",
+  research_reconstruction: "研究复原",
+  programmatic_demo: "程序化演示",
+  artistic_creation: "艺术创作",
+} satisfies Record<ModelClassification, string>;
+
+export const artifactSources: SourceReference[] = [
   {
     id: "henan-museum-jiahu",
     name: "河南博物院｜贾湖骨笛",
@@ -97,17 +231,40 @@ export const artifacts: Artifact[] = [
     displayIndex: "001",
     name: "贾湖骨笛",
     subtitle: "把九千年前的一缕清音，带回当代",
+
+    period: "新石器时代",
+    dateDescription: "距今约 9,000—7,800 年",
+    discoveryDate: "1987 年",
+    material: "鹤类禽鸟中空尺骨",
+    artifactType: "多音孔吹奏乐器",
+    discoveryLocation: "河南舞阳贾湖遗址 M282 号墓",
+    dimensions: "23.6 厘米（馆藏规格）",
+
     summary:
       "贾湖遗址出土的骨笛，是一组年代早、保存状况突出且经过测音研究的多音孔吹奏乐器。它们让我们能够从实物、测音与考古层位三个维度，重新理解中国新石器时代早期的音乐实践。",
     researchNote:
       "本页以河南博物院公开藏品信息与 1999 年《Nature》论文为基础。不同馆藏骨笛的尺寸、孔数和年代并不完全相同，展示时应避免把多件文物的信息混为一件。",
-    facts: [
-      { label: "时代", value: "新石器时代" },
-      { label: "年代", value: "距今约 9,000—7,800 年" },
-      { label: "出土", value: "1987 年" },
-      { label: "地点", value: "河南舞阳贾湖遗址 M282 号墓" },
-      { label: "材质", value: "鹤类禽鸟中空尺骨" },
-      { label: "规格", value: "23.6 厘米（馆藏规格）" },
+    highlights: [
+      { value: "约 9000", label: "年前 · 早期标本" },
+      { value: "30+", label: "支 · 多轮发掘记录" },
+      { value: "多种孔数", label: "· 形制丰富" },
+    ],
+
+    images: [
+      {
+        id: "jiahu-primary-image",
+        src: "/jiahu-bone-flute.jpg",
+        alt: "贾湖遗址出土骨笛的同类文物参考照片",
+        label: "参考图像",
+        caption: "同类文物照片，摄于漯河市博物馆；非 M282:20 单件的精确对应。",
+        credit: "ASHillocks / Wikimedia Commons / CC BY-SA 4.0",
+        sourceId: "commons-jiahu-photo",
+        license: "CC BY-SA 4.0",
+        authorizationStatus: "open_license",
+        width: 1920,
+        height: 1440,
+        isPrimary: true,
+      },
     ],
     timeline: [
       {
@@ -136,6 +293,7 @@ export const artifacts: Artifact[] = [
         text: "数字展示让公众在不接触原件的前提下理解文物形制、历史语境与音乐价值。",
       },
     ],
+    sources: artifactSources,
     questions: [
       {
         question: "贾湖骨笛是什么？",
@@ -198,44 +356,186 @@ export const artifacts: Artifact[] = [
         keywords: ["ai", "大模型", "知识库", "rag", "讲解员"],
       },
     ],
-    assets: {
-      image: {
-        src: "/jiahu-bone-flute.jpg",
-        alt: "贾湖遗址出土骨笛的同类文物参考照片",
-        label: "参考图像",
-        caption: "同类文物照片，摄于漯河市博物馆；非 M282:20 单件的精确对应。",
-        credit: "ASHillocks / Wikimedia Commons / CC BY-SA 4.0",
-      },
-      model: {
-        kind: "procedural-demo",
-        ariaLabel: "可旋转的骨笛功能演示模型",
-        warning: "功能演示模型 · 非文物扫描 · 不代表真实比例、纹理与复原结论",
-      },
-      audio: {
-        kind: "synthetic-demo",
-        title: "听见远古 · 合成音色占位演示",
+    model: {
+      classification: "programmatic_demo",
+      hasRealFile: false,
+      fallbackImageId: "jiahu-primary-image",
+      ariaLabel: "可旋转的骨笛功能演示模型",
+      notice: "功能演示模型 · 非文物扫描 · 不代表真实比例、纹理与复原结论",
+    },
+    audio: [
+      {
+        id: "jiahu-synthetic-demo",
+        name: "听见远古 · 合成音色占位演示",
+        classification: "digitally_synthesized",
+        isBrowserGenerated: true,
         description: "用于验证播放、进度和音量控制；不是贾湖骨笛原件或复原件录音。",
         ariaLabel: "合成占位演示音频",
       },
-    },
-    contentReview: {
-      status: "pending-expert-review",
-      label: "待专业成员审核",
-      sourceIds: [
-        "henan-museum-jiahu",
-        "national-museum-bone-flute",
-        "nature-1999-jiahu",
-        "commons-jiahu-photo",
-      ],
-      lastUpdated: "2026-07-14",
-    },
+    ],
+
+    contentClassification: "archaeological_fact",
+    reviewStatus: "draft",
+    updatedAt: "2026-07-14",
+    assetNotices: [
+      "功能演示模型 · 非文物扫描 · 不代表真实比例、纹理与复原结论",
+      "用于验证播放、进度和音量控制；不是贾湖骨笛原件或复原件录音。",
+    ],
+    isDemo: true,
+    isPlaceholder: false,
+    catalogVisibility: "demo",
   },
 ];
 
 export const featuredArtifact = artifacts[0];
 
-export function getSourcesForArtifact(artifact: Artifact): ArtifactSource[] {
-  return artifact.contentReview.sourceIds
-    .map((sourceId) => artifactSources.find((source) => source.id === sourceId))
-    .filter((source): source is ArtifactSource => Boolean(source));
+export function getAllArtifacts(): readonly Artifact[] {
+  return artifacts;
+}
+
+export function getDisplayableArtifacts(
+  source: readonly Artifact[] = artifacts,
+): Artifact[] {
+  return source.filter((artifact) => {
+    if (
+      artifact.isPlaceholder ||
+      artifact.reviewStatus === "placeholder" ||
+      artifact.reviewStatus === "under_review"
+    ) {
+      return false;
+    }
+
+    const isApprovedForPublic =
+      artifact.catalogVisibility === "public" &&
+      (artifact.reviewStatus === "approved" || artifact.reviewStatus === "published");
+    const isExplicitConceptDemo =
+      artifact.catalogVisibility === "demo" &&
+      artifact.isDemo &&
+      artifact.reviewStatus === "draft";
+    const isApprovedDemo =
+      artifact.catalogVisibility === "demo" &&
+      artifact.isDemo &&
+      (artifact.reviewStatus === "approved" || artifact.reviewStatus === "published");
+
+    return isApprovedForPublic || isExplicitConceptDemo || isApprovedDemo;
+  });
+}
+
+function getUniqueFilterValues(values: Array<string | undefined>): string[] {
+  return Array.from(
+    new Set(
+      values
+        .map((value) => value?.trim())
+        .filter((value): value is string => Boolean(value)),
+    ),
+  ).sort((left, right) => left.localeCompare(right, "zh-CN"));
+}
+
+export function getArtifactFilterOptions(
+  source: readonly Artifact[] = artifacts,
+): ArtifactFilterOptions {
+  const displayableArtifacts = getDisplayableArtifacts(source);
+
+  return {
+    periods: getUniqueFilterValues(displayableArtifacts.map((artifact) => artifact.period)),
+    materials: getUniqueFilterValues(displayableArtifacts.map((artifact) => artifact.material)),
+    artifactTypes: getUniqueFilterValues(
+      displayableArtifacts.map((artifact) => artifact.artifactType),
+    ),
+  };
+}
+
+export function filterArtifacts(
+  source: readonly Artifact[] = artifacts,
+  criteria: ArtifactFilterCriteria = {},
+): Artifact[] {
+  const query = criteria.query?.trim().toLocaleLowerCase("zh-CN") ?? "";
+  const period = criteria.period?.trim() ?? "";
+  const material = criteria.material?.trim() ?? "";
+  const artifactType = criteria.artifactType?.trim() ?? "";
+
+  return getDisplayableArtifacts(source).filter((artifact) => {
+    const matchesName =
+      !query || artifact.name.toLocaleLowerCase("zh-CN").includes(query);
+    const matchesPeriod = !period || artifact.period?.trim() === period;
+    const matchesMaterial = !material || artifact.material?.trim() === material;
+    const matchesArtifactType =
+      !artifactType || artifact.artifactType?.trim() === artifactType;
+
+    return matchesName && matchesPeriod && matchesMaterial && matchesArtifactType;
+  });
+}
+
+function normalizeArtifactSlug(slug: string): string | undefined {
+  const normalizedSlug = slug.trim();
+  if (
+    !normalizedSlug ||
+    normalizedSlug.length > 128 ||
+    !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(normalizedSlug)
+  ) {
+    return undefined;
+  }
+  return normalizedSlug;
+}
+
+export function getArtifactBySlug(
+  slug: string,
+  source: readonly Artifact[] = artifacts,
+): Artifact | undefined {
+  const normalizedSlug = normalizeArtifactSlug(slug);
+  if (!normalizedSlug) return undefined;
+  return source.find((artifact) => artifact.slug === normalizedSlug);
+}
+
+export function getDisplayableArtifactBySlug(
+  slug: string,
+  source: readonly Artifact[] = artifacts,
+): Artifact | undefined {
+  const artifact = getArtifactBySlug(slug, source);
+  if (!artifact) return undefined;
+  return getDisplayableArtifacts([artifact])[0];
+}
+
+export function getPrimaryImage(artifact: Artifact): ArtifactImage | undefined {
+  return artifact.images?.find((image) => image.isPrimary) ?? artifact.images?.[0];
+}
+
+export function getPrimaryAudio(artifact: Artifact): ArtifactAudio | undefined {
+  return artifact.audio?.[0];
+}
+
+export function getSourcesForArtifact(artifact: Artifact): SourceReference[] {
+  return artifact.sources ?? [];
+}
+
+export function getArtifactDisplayFacts(artifact: Artifact): ArtifactFact[] {
+  const facts: Array<ArtifactFact | undefined> = [
+    artifact.period ? { label: "时代", value: artifact.period } : undefined,
+    artifact.dateDescription ? { label: "年代", value: artifact.dateDescription } : undefined,
+    artifact.discoveryDate ? { label: "出土", value: artifact.discoveryDate } : undefined,
+    artifact.discoveryLocation ? { label: "地点", value: artifact.discoveryLocation } : undefined,
+    artifact.material ? { label: "材质", value: artifact.material } : undefined,
+    artifact.dimensions ? { label: "规格", value: artifact.dimensions } : undefined,
+  ];
+
+  return [
+    ...facts.filter((fact): fact is ArtifactFact => Boolean(fact)),
+    ...(artifact.additionalFacts ?? []),
+  ];
+}
+
+export function getContentClassificationLabel(classification: ContentClassification): string {
+  return CONTENT_CLASSIFICATION_LABELS[classification];
+}
+
+export function getReviewStatusLabel(status: ReviewStatus): string {
+  return REVIEW_STATUS_LABELS[status];
+}
+
+export function getAudioClassificationLabel(classification: AudioClassification): string {
+  return AUDIO_CLASSIFICATION_LABELS[classification];
+}
+
+export function getModelClassificationLabel(classification: ModelClassification): string {
+  return MODEL_CLASSIFICATION_LABELS[classification];
 }
