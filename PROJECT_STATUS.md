@@ -41,17 +41,27 @@
 | 检查 | 命令 | 结果 |
 | --- | --- | --- |
 | 安装依赖 | `npm.cmd ci` | 成功，按锁文件安装 514 个包 |
-| 类型检查 | `node_modules\.bin\tsc.cmd --noEmit --incremental false` | 失败，3 个 Cloudflare Worker 类型错误 |
+| Cloudflare 类型依赖 | `npm.cmd install --save-dev --save-exact @cloudflare/workers-types@4.20260515.1` | 成功，只增加 1 个官方开发依赖 |
+| 类型检查 | `npm.cmd run typecheck` | 成功，0 个错误 |
 | Lint | `npm.cmd run lint` | 失败，1 个错误、1 个警告 |
 | 构建 | `npm.cmd run build` | 成功 |
 | 现有测试 | `npm.cmd test` | 成功，2 项通过、0 项失败 |
 | 本地启动 | `npm.cmd run start -- --host 127.0.0.1 --port 4173` | 成功，首页 HTTP 200，包含 Demo 标题 |
 
-类型检查错误：
+原类型检查错误：
 
-- `db/index.ts` 找不到 `cloudflare:workers`；
-- `worker/index.ts` 找不到 `Fetcher`；
-- `worker/index.ts` 找不到 `D1Database`。
+- `db/index.ts(1,21)`：找不到 `cloudflare:workers` 模块或类型声明；
+- `worker/index.ts(6,11)`：找不到 `Fetcher`；
+- `worker/index.ts(7,7)`：找不到 `D1Database`。
+
+根本原因与修改方式：
+
+- 现有 Wrangler 仅把 `@cloudflare/workers-types` 列为可选 peer dependency，项目实际没有安装或加载 Cloudflare Worker 官方类型；
+- 增加与当前 Wrangler 兼容的精确版本 `@cloudflare/workers-types@4.20260515.1`；
+- 在 `tsconfig.json` 中显式加载 Node 和 Cloudflare Worker 类型；
+- 新增 `worker/env.d.ts`，只声明项目现有的可选 D1 `DB` 绑定；
+- 在 `package.json` 中增加 `typecheck` 脚本：`tsc --noEmit --incremental false`；
+- 未使用 `any`、`@ts-ignore`、`@ts-nocheck`，未关闭 `strict`，未排除 Worker 目录，也未修改 Worker 运行时代码。
 
 Lint 问题：
 
@@ -72,7 +82,7 @@ Lint 问题：
 
 ### 高
 
-1. 完整 TypeScript 类型检查未通过，也没有固定的 `typecheck` 脚本。
+1. `npm.cmd run lint` 仍因音频 URL effect 内同步设置 state 而失败；本轮按任务边界只记录，未修改页面代码。
 2. 现有专业内容仍待团队审核，正式公开前不能自行改成已审核。
 3. 3D 初始化没有错误捕获和静态图片降级，部分设备可能出现空白区域。
 4. 国内稳定部署方案、正式域名和网络验收尚未确定。
@@ -106,20 +116,21 @@ Lint 问题：
 
 ## 7. 最近修改内容
 
-- 将已存在的 Demo 和 Git 历史迁移到 D 盘正式交接目录；
-- 移除交接副本的远程仓库配置；
-- 安装依赖并重新执行类型、Lint、构建、测试和本地启动检查；
-- 更新项目交接文档；
-- 没有修改功能代码和考古资料。
+- 增加 Cloudflare Worker 官方类型开发依赖；
+- 将 Node 和 Cloudflare Worker 类型接入现有 TypeScript 配置；
+- 增加项目 D1 `DB` 绑定的环境类型声明；
+- 增加固定的 `npm.cmd run typecheck` 命令；
+- 类型检查、构建和 2 项现有测试均通过；
+- Lint 仍有 1 个原有错误和 1 个原有警告，本轮没有扩大范围处理；
+- 没有修改功能代码、页面表现或考古资料。
 
 ## 8. 下一项推荐开发任务
 
-下一轮只做“修复 TypeScript 类型检查基线”：
+下一轮只做“修复现有 Lint 检查基线”：
 
-- 配置正确的 Cloudflare Worker 类型；
-- 增加 `npm.cmd run typecheck` 命令；
-- 类型检查、构建和现有测试全部通过；
-- 不改变页面外观、功能和专业资料。
+- 在不改变音频行为的前提下，解决 `HeritageDemo.tsx` 的 `react-hooks/set-state-in-effect` 错误；
+- 判断 `ArtifactDetail.tsx` 的普通 `<img>` 警告是否需要本阶段处理，避免为了消除警告引入新的托管耦合；
+- 重新运行 typecheck、lint、构建和现有测试；
+- 不修改考古资料，也不进行页面重构。
 
-完成后再单独处理 3D 初始化失败时的静态降级。
-
+完成后再单独处理 3D 初始化失败时的静态图片降级。
