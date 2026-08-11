@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { spawn } from "node:child_process";
 import { access, readFile } from "node:fs/promises";
 import test from "node:test";
 import {
@@ -23,6 +24,48 @@ import {
 } from "../app/guide-utils.ts";
 
 const root = new URL("../", import.meta.url);
+
+async function startProductionServer() {
+  const child = spawn(
+    process.execPath,
+    ["scripts/start-production.mjs", "--host", "127.0.0.1", "--port", "0"],
+    {
+      cwd: root,
+      stdio: ["ignore", "pipe", "pipe"],
+    },
+  );
+  let output = "";
+
+  const ready = new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      reject(new Error(`Production server did not start in time.\n${output}`));
+    }, 15_000);
+
+    const collect = (chunk) => {
+      output += chunk.toString();
+      const match = output.match(/http:\/\/127\.0\.0\.1:(\d+)/);
+      if (match) {
+        clearTimeout(timeout);
+        resolve(Number.parseInt(match[1], 10));
+      }
+    };
+
+    child.stdout.on("data", collect);
+    child.stderr.on("data", collect);
+    child.once("error", (error) => {
+      clearTimeout(timeout);
+      reject(error);
+    });
+    child.once("exit", (code) => {
+      clearTimeout(timeout);
+      reject(
+        new Error(`Production server exited before it was ready (${code}).\n${output}`),
+      );
+    });
+  });
+
+  return { child, port: await ready };
+}
 
 function createTestArtifact(overrides = {}) {
   return {
@@ -97,6 +140,33 @@ test("server-renders the Jiahu heritage demo", async () => {
     /programmatic_demo|digitally_synthesized|archaeological_fact/,
   );
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape|react-loading-skeleton/i);
+});
+
+test("local production server serves its rendered asset URLs", async () => {
+  const { child, port } = await startProductionServer();
+
+  try {
+    const response = await fetch(`http://127.0.0.1:${port}/`);
+    assert.equal(response.status, 200);
+
+    const html = await response.text();
+    const assetPaths = [
+      ...new Set(
+        [...html.matchAll(/(?:src|href)="(\/assets\/[^"]+)"/g)].map(
+          (match) => match[1],
+        ),
+      ),
+    ];
+
+    assert.ok(assetPaths.length > 0, "Rendered HTML should reference built assets");
+
+    for (const assetPath of assetPaths) {
+      const assetResponse = await fetch(`http://127.0.0.1:${port}${assetPath}`);
+      assert.equal(assetResponse.status, 200, `${assetPath} should be served`);
+    }
+  } finally {
+    child.kill();
+  }
 });
 
 test("server-renders a displayable artifact from its standalone slug route", async () => {
