@@ -127,6 +127,8 @@ export type Artifact = {
   reviewStatus: ReviewStatus;
   reviewer?: string;
   reviewedAt?: string;
+  assetReviewer?: string;
+  assetsReviewedAt?: string;
   updatedAt?: string;
   assetNotices?: string[];
   isDemo: boolean;
@@ -251,6 +253,7 @@ export function validateArtifactCatalog(source: readonly Artifact[] = artifacts)
   const seen = { id: new Set<string>(), slug: new Set<string>(), displayIndex: new Set<string>() };
   const allIds = new Set(source.map((artifact) => artifact.id));
   const add = (artifact: Artifact, field: string, message: string) => issues.push({ artifactId: artifact.id, field, message });
+  const isIsoDate = (value: string | undefined) => !value || /^\d{4}-\d{2}-\d{2}$/.test(value);
 
   source.forEach((artifact) => {
     (["id", "slug", "displayIndex"] as const).forEach((field) => {
@@ -320,6 +323,15 @@ export function validateArtifactCatalog(source: readonly Artifact[] = artifacts)
       if (artifact.catalogVisibility === "public" && !isPlaceholderArtifact(artifact) && (!audio.sourceId || !audio.authorizationStatus)) add(artifact, "audio", "公开音频必须记录来源和授权状态");
     });
     if (["approved", "published"].includes(artifact.reviewStatus) && (!artifact.reviewer || !artifact.reviewedAt || !artifact.contentVersion)) add(artifact, "review", "已审核或已发布记录必须填写资料版本、审核人和审核时间");
+    if (!isIsoDate(artifact.reviewedAt)) add(artifact, "reviewedAt", "内容审核日期必须使用 YYYY-MM-DD 格式");
+    if (!isIsoDate(artifact.assetsReviewedAt)) add(artifact, "assetsReviewedAt", "素材审核日期必须使用 YYYY-MM-DD 格式");
+    const formalPublic = artifact.catalogVisibility === "public" && ["approved", "published"].includes(artifact.reviewStatus);
+    const hasPublishedAssets = Boolean(artifact.images?.length || artifact.model?.glbPath || artifact.audio?.some((audio) => audio.filePath));
+    if (formalPublic && hasPublishedAssets && (!artifact.assetReviewer || !artifact.assetsReviewedAt)) add(artifact, "assetReview", "包含公开素材的正式记录必须填写素材审核人和素材审核日期");
+    if (formalPublic) artifact.sources?.forEach((source) => {
+      if (!source.id.trim() || !source.name.trim()) add(artifact, "sources", "正式来源必须填写稳定 ID 和名称");
+      if (!source.publication?.trim() && !source.href?.trim()) add(artifact, `sources.${source.id}`, "正式来源必须填写出版物信息或可核对链接");
+    });
     if (isPlaceholderArtifact(artifact)) {
       const forbidden = [artifact.period, artifact.material, artifact.artifactType, artifact.detailedDescription, artifact.researchNote, ...(artifact.timeline ?? []).map((item) => item.text)];
       if (forbidden.some(Boolean)) add(artifact, "placeholder", "占位记录不得包含未经审核的专业陈述");

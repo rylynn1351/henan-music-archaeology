@@ -479,7 +479,8 @@ test("validates publication, references, media sources, and placeholder boundari
     slug: "validation-a",
     displayIndex: "900",
     reviewer: undefined,
-    reviewedAt: undefined,
+    reviewedAt: "2026/08/16",
+    assetsReviewedAt: "16-08-2026",
     relatedArtifactIds: ["missing-artifact"],
     images: [{ id: "image-a", src: "/missing.jpg", alt: "测试图片", isPrimary: true }],
     model: { classification: "real_scan", hasRealFile: true, fallbackImageId: "missing-image" },
@@ -502,6 +503,9 @@ test("validates publication, references, media sources, and placeholder boundari
   assert.ok(fields.includes("slug"));
   assert.ok(fields.includes("displayIndex"));
   assert.ok(fields.includes("review"));
+  assert.ok(fields.includes("reviewedAt"));
+  assert.ok(fields.includes("assetsReviewedAt"));
+  assert.ok(fields.includes("assetReview"));
   assert.ok(fields.includes("relatedArtifactIds"));
   assert.ok(fields.includes("images"));
   assert.ok(fields.includes("model.glbPath"));

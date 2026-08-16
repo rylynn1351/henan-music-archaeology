@@ -22,6 +22,8 @@ export const artifactTemplate: Artifact = {
   reviewStatus: "draft",
   reviewer: undefined,
   reviewedAt: undefined,
+  assetReviewer: undefined,
+  assetsReviewedAt: undefined,
   updatedAt: undefined,
   isDemo: false,
   isPlaceholder: false,

@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { copyFile, mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -36,6 +36,8 @@ test("artifact:new generates and registers a private draft", async (t) => {
   assert.match(record, /reviewStatus: "draft"/);
   assert.match(record, /catalogVisibility: "internal"/);
   assert.match(record, /fieldReferences: \[\]/);
+  assert.match(record, /assetReviewer: undefined/);
+  assert.match(record, /assetsReviewedAt: undefined/);
   assert.match(registry, /import \{ artifact004 \} from "\.\/stable-slug\.ts"/);
   assert.match(registry, /\sartifact004,/);
 });
@@ -59,22 +61,34 @@ test("artifact:check accepts a complete reviewed record and real files", async (
   const root = await fixtureRoot();
   t.after(() => rm(root, { recursive: true, force: true }));
   const imageDirectory = path.join(root, "public", "artifacts", "existing", "images");
-  await mkdir(imageDirectory, { recursive: true });
-  await writeFile(path.join(imageDirectory, "primary.webp"), "test");
+  const modelDirectory = path.join(root, "public", "artifacts", "existing", "models");
+  const audioDirectory = path.join(root, "public", "artifacts", "existing", "audio");
+  const fixtures = path.join(import.meta.dirname, "fixtures", "artifact-media");
+  await Promise.all([imageDirectory, modelDirectory, audioDirectory].map((directory) => mkdir(directory, { recursive: true })));
+  await Promise.all([
+    copyFile(path.join(fixtures, "test-only-pixel.png"), path.join(imageDirectory, "primary.png")),
+    copyFile(path.join(fixtures, "test-only-triangle.glb"), path.join(modelDirectory, "model.glb")),
+    copyFile(path.join(fixtures, "test-only-tone.wav"), path.join(audioDirectory, "track.wav")),
+  ]);
   const artifact = {
     id: "artifact-001", slug: "existing", displayIndex: "001", name: "完整测试文物",
     period: "测试时期", summary: "测试摘要", contentVersion: "1.0",
     contentClassification: "archaeological_fact", reviewStatus: "published",
     reviewer: "测试审核人", reviewedAt: "2026-08-16", isDemo: false, catalogVisibility: "public",
+    assetReviewer: "测试素材审核人", assetsReviewedAt: "2026-08-16",
     sources: [{ id: "source-1", name: "测试来源", href: "https://example.test/source" }],
     fieldReferences: [
       { field: "period", sourceIds: ["source-1"] },
       { field: "summary", sourceIds: ["source-1"], locator: "第 1 页" },
     ],
-    images: [{ id: "primary", src: "/artifacts/existing/images/primary.webp", alt: "测试图", sourceId: "source-1", authorizationStatus: "authorized" }],
+    images: [{ id: "primary", src: "/artifacts/existing/images/primary.png", alt: "测试图", sourceId: "source-1", authorizationStatus: "authorized" }],
+    model: { classification: "artistic_creation", glbPath: "/artifacts/existing/models/model.glb", hasRealFile: true, scale: 1, unit: "m", rotation: [0, 0, 0], fallbackImageId: "primary", sourceId: "source-1", authorizationStatus: "authorized", notice: "测试模型，非文物扫描" },
+    audio: [{ id: "track", name: "测试数字音", classification: "digitally_synthesized", filePath: "/artifacts/existing/audio/track.wav", isBrowserGenerated: false, sourceId: "source-1", authorizationStatus: "authorized", description: "测试文件音频，不代表文物音色" }],
   };
   const result = await checkArtifactToolkit({ root, artifacts: [artifact] });
   assert.deepEqual(result, { errors: [], warnings: [] });
+  assert.equal((await readFile(path.join(modelDirectory, "model.glb"))).subarray(0, 4).toString("ascii"), "glTF");
+  assert.equal((await readFile(path.join(audioDirectory, "track.wav"))).subarray(0, 4).toString("ascii"), "RIFF");
   assert.match(formatArtifactCheckReport(result), /预检通过/);
 });
 
@@ -96,11 +110,42 @@ test("artifact:check reports missing registration, citations, review data, asset
   const report = formatArtifactCheckReport(result);
   assert.match(report, /数据文件 unregistered\.ts 尚未注册/);
   assert.match(report, /正式公开记录缺少资料版本/);
+  assert.match(report, /缺少素材审核人/);
+  assert.match(report, /缺少素材审核日期/);
   assert.match(report, /字段 period 缺少字段级引用/);
   assert.match(report, /不支持的图片格式/);
   assert.match(report, /声明的素材文件不存在/);
   assert.match(report, /公开素材授权状态不完整/);
   assert.match(report, /文件未被任何文物记录引用/);
+});
+
+test("artifact:check allows reviewed text-only records without asset review", async (t) => {
+  const root = await fixtureRoot();
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const artifact = {
+    id: "artifact-001", slug: "existing", displayIndex: "001", name: "纯文字测试文物",
+    summary: "测试摘要", contentVersion: "1.0", contentClassification: "archaeological_fact",
+    reviewStatus: "approved", reviewer: "内容审核人", reviewedAt: "2026-08-16",
+    isDemo: false, catalogVisibility: "public",
+    sources: [{ id: "source-1", name: "测试网页", href: "https://example.test/source" }],
+    fieldReferences: [{ field: "summary", sourceIds: ["source-1"] }],
+  };
+  const result = await checkArtifactToolkit({ root, artifacts: [artifact] });
+  assert.deepEqual(result, { errors: [], warnings: [] });
+});
+
+test("artifact:check validates review dates and formal source completeness", async (t) => {
+  const root = await fixtureRoot();
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const artifact = {
+    id: "artifact-001", slug: "existing", displayIndex: "001", name: "审核格式测试",
+    contentVersion: "1.0", contentClassification: "archaeological_fact", reviewStatus: "approved",
+    reviewer: "内容审核人", reviewedAt: "2026/08/16", isDemo: false, catalogVisibility: "public",
+    sources: [{ id: "source-1", name: "无出版信息来源" }], fieldReferences: [],
+  };
+  const report = formatArtifactCheckReport(await checkArtifactToolkit({ root, artifacts: [artifact] }));
+  assert.match(report, /内容审核日期必须使用 YYYY-MM-DD 格式/);
+  assert.match(report, /正式来源必须填写出版物信息或可核对链接/);
 });
 
 test("artifact:check blocks public files accidentally placed under an internal draft", async (t) => {

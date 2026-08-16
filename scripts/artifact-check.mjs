@@ -8,6 +8,7 @@ const SUPPORTED = {
   audio: new Set([".mp3", ".wav", ".ogg", ".m4a"]),
 };
 const AUTHORIZED = new Set(["open_license", "authorized"]);
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 function issue(artifactId, field, message, severity = "error") { return { artifactId, field, message, severity }; }
 async function exists(target) { try { return (await stat(target)).isFile(); } catch { return false; } }
@@ -90,6 +91,15 @@ export async function checkArtifactToolkit({ root, artifacts, catalogIssues = []
       if (!artifact.contentVersion) errors.push(issue(artifact.id, "contentVersion", "正式公开记录缺少资料版本"));
       if (!artifact.reviewer) errors.push(issue(artifact.id, "reviewer", "正式公开记录缺少审核人"));
       if (!artifact.reviewedAt) errors.push(issue(artifact.id, "reviewedAt", "正式公开记录缺少审核日期"));
+      if (artifact.reviewedAt && !ISO_DATE.test(artifact.reviewedAt)) errors.push(issue(artifact.id, "reviewedAt", "内容审核日期必须使用 YYYY-MM-DD 格式"));
+      const hasPublishedAssets = Boolean(artifact.images?.length || artifact.model?.glbPath || artifact.audio?.some((audio) => audio.filePath));
+      if (hasPublishedAssets && !artifact.assetReviewer) errors.push(issue(artifact.id, "assetReviewer", "包含公开素材的正式记录缺少素材审核人"));
+      if (hasPublishedAssets && !artifact.assetsReviewedAt) errors.push(issue(artifact.id, "assetsReviewedAt", "包含公开素材的正式记录缺少素材审核日期"));
+      if (artifact.assetsReviewedAt && !ISO_DATE.test(artifact.assetsReviewedAt)) errors.push(issue(artifact.id, "assetsReviewedAt", "素材审核日期必须使用 YYYY-MM-DD 格式"));
+      for (const source of artifact.sources ?? []) {
+        if (!source.id?.trim() || !source.name?.trim()) errors.push(issue(artifact.id, "sources", "正式来源必须填写稳定 ID 和名称"));
+        if (!source.publication?.trim() && !source.href?.trim()) errors.push(issue(artifact.id, `sources.${source.id}`, "正式来源必须填写出版物信息或可核对链接"));
+      }
       const referenceMap = new Map((artifact.fieldReferences ?? []).map((reference) => [reference.field, reference]));
       const requiredFields = ["period", "dateDescription", "discoveryDate", "material", "artifactType", "discoveryLocation", "currentCollection", "dimensions", "summary", "detailedDescription", "researchNote"];
       for (const field of requiredFields) {
