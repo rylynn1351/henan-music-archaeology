@@ -31,7 +31,8 @@ export function validateArtifactArguments({ index, slug, name }) {
 function insertBeforeMarker(source, endMarker, line) {
   const markerIndex = source.indexOf(endMarker);
   if (markerIndex < 0) throw new Error(`注册表缺少标记：${endMarker}`);
-  return `${source.slice(0, markerIndex)}${line}\n${source.slice(markerIndex)}`;
+  const markerLineStart = source.lastIndexOf("\n", markerIndex - 1) + 1;
+  return `${source.slice(0, markerLineStart)}${line}\n${source.slice(markerLineStart)}`;
 }
 
 function buildRecord({ index, slug, name }) {

@@ -39,7 +39,7 @@ test("artifact:new generates and registers a private draft", async (t) => {
   assert.match(record, /assetReviewer: undefined/);
   assert.match(record, /assetsReviewedAt: undefined/);
   assert.match(registry, /import \{ artifact004 \} from "\.\/stable-slug\.ts"/);
-  assert.match(registry, /\sartifact004,/);
+  assert.match(registry, /\n  artifact004,\n  \/\/ artifact-registry-items:end/);
 });
 
 test("artifact:new rejects invalid or duplicate identifiers without changing files", async (t) => {

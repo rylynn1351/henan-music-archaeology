@@ -16,10 +16,10 @@ npm.cmd run dev
 常用质量检查：
 
 ```powershell
-npm.cmd run lint
-npm.cmd run typecheck
-npm.cmd test
+npm.cmd run verify
 ```
+
+`verify` 会依次执行 lint、类型检查、文物资料预检、生产构建和全部自动测试；`npm test` 也会先执行 `artifact:check`。GitHub Actions 在 Node.js 22 环境中执行同一套门禁。
 
 构建完成后可在 Windows 上启动本地生产预览：
 
@@ -67,6 +67,12 @@ npm.cmd run artifact:new -- --index 004 --slug stable-slug --name "文物名称"
 2. 在 `sources` 记录来源，在 `fieldReferences` 使用字段路径关联来源及页码、章节或链接，例如 `timeline.timeline-004-01.text`。
 3. 只有审核和授权完成的正式素材才能放入 `public/artifacts/<slug>/images/`、`models/`、`audio/`；原始授权文件仍留在私有目录。
 4. 运行 `npm.cmd run artifact:check`。命令会按文物输出中文错误和警告，并检查注册、引用、文件、格式、审核和授权。
-5. 预检通过后人工核对 `contentVersion`、`reviewer`、`reviewedAt`，再手动把状态改为 `approved` 或 `published`。项目不提供自动发布命令。
+5. 预检通过后人工核对资料版本、内容审核记录和素材审核记录，再手动把状态改为 `approved` 或 `published`。项目不提供自动发布命令。
+
+审核职责分开记录：
+
+- 内容审核人填写 `reviewer`、`reviewedAt`，负责专业文字、来源定位、争议表述和资料版本。
+- 素材审核人填写 `assetReviewer`、`assetsReviewedAt`，负责公开图片、GLB、文件音频的授权范围、署名和公开文件。纯文字正式记录无需素材审核记录。
+- 两类日期统一使用 `YYYY-MM-DD`；正式公开素材的授权状态只接受 `authorized` 或 `open_license`。
 
 GLB 记录至少填写 `glbPath`、`unit`、`scale`、`rotation`、`fallbackImageId`、`classification`、`sourceId` 和 `authorizationStatus`。页面、卡片、3D 和播放器不需要复制。

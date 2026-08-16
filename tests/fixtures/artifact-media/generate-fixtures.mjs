@@ -49,7 +49,7 @@ function createTriangleGlb() {
 
 function createToneWav() {
   const sampleRate = 8000;
-  const sampleCount = 2000;
+  const sampleCount = 24000;
   const data = Buffer.alloc(sampleCount * 2);
   for (let index = 0; index < sampleCount; index += 1) {
     const fade = Math.min(1, index / 120, (sampleCount - index) / 120);
