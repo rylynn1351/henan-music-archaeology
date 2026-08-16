@@ -2,6 +2,7 @@ import vinext from "vinext";
 import { defineConfig } from "vite";
 import hostingConfig from "./.openai/hosting.json";
 import { sites } from "./build/sites-vite-plugin";
+import path from "node:path";
 
 const SITE_CREATOR_PLACEHOLDER_DATABASE_ID =
   "00000000-0000-4000-8000-000000000000";
@@ -44,6 +45,28 @@ export default defineConfig(async () => {
   const { cloudflare } = await import("@cloudflare/vite-plugin");
 
   return {
+    resolve: {
+      alias: [
+        // Resolve the "three" package to its source entry so the WebGL
+        // renderer stack becomes hundreds of splittable modules instead of a
+        // single >500 kB monolith chunk.
+        { find: /^three$/, replacement: path.resolve("node_modules/three/src/Three.js") },
+      ],
+    },
+    build: {
+      rolldownOptions: {
+        output: {
+          codeSplitting: {
+            groups: [
+              { name: "three-shaders", test: /three[\\/]src[\\/]renderers[\\/]shaders[\\/]/, priority: 30 },
+              { name: "three-webgl", test: /three[\\/]src[\\/]renderers[\\/]webgl[\\/]/, priority: 30 },
+              { name: "three-renderers", test: /three[\\/]src[\\/]renderers[\\/]/, priority: 20 },
+              { name: "three-core", test: /three[\\/]src[\\/]/, priority: 10 },
+            ],
+          },
+        },
+      },
+    },
     server: isCodexSeatbeltSandbox
       ? { watch: { useFsEvents: false, usePolling: true } }
       : undefined,

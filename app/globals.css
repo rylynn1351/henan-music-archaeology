@@ -1296,6 +1296,95 @@ section[id] {
   pointer-events: auto;
 }
 
+.model-hotspot-layer {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  pointer-events: none;
+}
+
+.model-hotspot-marker {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  transform: translate(-50%, -50%);
+  color: #f6ead4;
+  border: 1px solid rgba(246, 234, 212, 0.55);
+  border-radius: 50%;
+  background: rgba(15, 25, 21, 0.78);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: background-color 160ms ease, border-color 160ms ease;
+}
+
+.model-hotspot-marker:hover,
+.model-hotspot-marker:focus-visible,
+.model-hotspot-marker[aria-pressed="true"] {
+  color: #141c18;
+  border-color: #e8b86d;
+  background: rgba(232, 184, 109, 0.92);
+}
+
+.model-hotspot-marker:focus-visible {
+  outline: 2px solid #f6ead4;
+  outline-offset: 2px;
+}
+
+.model-hotspot-panel {
+  position: absolute;
+  z-index: 4;
+  top: 18px;
+  left: 18px;
+  width: min(300px, calc(100% - 36px));
+  padding: 16px 18px;
+  color: #f7efdf;
+  border: 1px solid rgba(246, 234, 212, 0.22);
+  background: rgba(13, 23, 19, 0.86);
+  backdrop-filter: blur(7px);
+}
+
+.model-hotspot-panel-index {
+  display: block;
+  margin-bottom: 6px;
+  color: #d8b478;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+}
+
+.model-hotspot-panel strong {
+  display: block;
+  margin-bottom: 8px;
+  font-family: var(--font-serif);
+  font-size: 17px;
+  font-weight: 500;
+}
+
+.model-hotspot-panel p {
+  margin: 0 0 8px;
+  color: rgba(247, 239, 223, 0.72);
+  font-size: 11px;
+  line-height: 1.8;
+}
+
+.model-hotspot-panel .model-hotspot-audio-hint {
+  color: #d8b478;
+}
+
+.model-hotspot-close {
+  margin-top: 4px;
+  padding: 7px 12px;
+  color: #f6ead4;
+  border: 1px solid rgba(246, 234, 212, 0.28);
+  background: rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+  font-size: 11px;
+}
+
 .demo-warning {
   margin: 0;
   padding: 12px 20px;
@@ -2227,6 +2316,17 @@ footer p {
     left: 16px;
     align-items: flex-end;
     flex-direction: column;
+  }
+
+  .model-hotspot-panel {
+    top: 12px;
+    left: 12px;
+    width: calc(100% - 24px);
+  }
+
+  .model-hotspot-marker {
+    width: 28px;
+    height: 28px;
   }
 
   .audio-card {

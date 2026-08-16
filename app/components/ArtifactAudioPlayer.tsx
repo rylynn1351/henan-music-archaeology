@@ -38,10 +38,20 @@ export function AudioPlayerFallback({ audio, message }: { audio?: ArtifactAudio;
   );
 }
 
-export default function ArtifactAudioPlayer({ tracks }: { tracks: readonly ArtifactAudio[] }) {
-  const [selectedId, setSelectedId] = useState(tracks[0]?.id ?? "");
+export default function ArtifactAudioPlayer({
+  tracks,
+  selectedTrackId,
+  onSelectTrack,
+}: {
+  tracks: readonly ArtifactAudio[];
+  selectedTrackId?: string;
+  onSelectTrack?: (trackId: string) => void;
+}) {
+  const [internalTrackId, setInternalTrackId] = useState(tracks[0]?.id ?? "");
   const [errorMessage, setErrorMessage] = useState<string>();
   const audioRef = useRef<HTMLAudioElement>(null);
+  const effectiveTrackId = selectedTrackId ?? internalTrackId;
+  const selectedId = tracks.some((track) => track.id === effectiveTrackId) ? effectiveTrackId : tracks[0]?.id ?? "";
   const selected = tracks.find((track) => track.id === selectedId) ?? tracks[0];
 
   useEffect(() => {
@@ -76,7 +86,7 @@ export default function ArtifactAudioPlayer({ tracks }: { tracks: readonly Artif
         <h3>{selected.name}</h3>
         {selected.description ? <p>{selected.description}</p> : null}
         {tracks.length > 1 ? (
-          <label className="audio-track-select"><span>选择音频</span><select value={selected.id} onChange={(event) => setSelectedId(event.target.value)}>{tracks.map((track) => <option key={track.id} value={track.id}>{track.name} · {getAudioClassificationLabel(track.classification)}</option>)}</select></label>
+          <label className="audio-track-select"><span>选择音频</span><select value={selected.id} onChange={(event) => { const value = event.target.value; setInternalTrackId(value); onSelectTrack?.(value); }}>{tracks.map((track) => <option key={track.id} value={track.id}>{track.name} · {getAudioClassificationLabel(track.classification)}</option>)}</select></label>
         ) : null}
         <audio ref={audioRef} controls preload="metadata" aria-label={selected.ariaLabel ?? selected.name} onError={() => setErrorMessage("音频暂时无法加载或播放，请继续浏览文字和其他数字体验。")} />
       </div>

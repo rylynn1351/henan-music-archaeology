@@ -253,6 +253,7 @@ test("keeps artifact data, sources, warnings, and assets explicit", async () => 
     modelViewer,
     audioPlayer,
     guideComponent,
+    viteConfig,
   ] = await Promise.all([
     readFile(new URL("../app/heritage-data.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/HeritageDemo.tsx", import.meta.url), "utf8"),
@@ -271,6 +272,7 @@ test("keeps artifact data, sources, warnings, and assets explicit", async () => 
     readFile(new URL("../app/components/ArtifactModelViewer.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/components/ArtifactAudioPlayer.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/components/ArtifactGuide.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../vite.config.ts", import.meta.url), "utf8"),
     access(new URL("public/jiahu-bone-flute.jpg", root)),
   ]);
 
@@ -323,6 +325,23 @@ test("keeps artifact data, sources, warnings, and assets explicit", async () => 
   assert.match(routeErrorPage, /文物资料暂时无法读取/);
   assert.match(jiahuRecord, /非文物扫描/);
   assert.match(jiahuRecord, /不是贾湖骨笛原件或复原件录音/);
+  assert.match(jiahuRecord, /hotspots:/);
+  assert.match(jiahuRecord, /交互演示/);
+  assert.match(jiahuRecord, /audioId: "jiahu-synthetic-demo"/);
+  assert.match(modelViewer, /model-hotspot-layer/);
+  assert.match(modelViewer, /localToWorld/);
+  assert.match(modelViewer, /onSelectHotspot/);
+  assert.match(modelViewer, /data-hotspot-count/);
+  assert.match(modelViewer, /\{\s*Scene,\s*PerspectiveCamera,\s*WebGLRenderer[\s\S]*?\}\s*=\s*await import\("three"\)/);
+  assert.doesNotMatch(modelViewer, /const THREE = await import\("three"\)/);
+  assert.match(viteConfig, /find:\s*\/\^three\$\//);
+  assert.match(viteConfig, /codeSplitting/);
+  assert.match(viteConfig, /three-renderers/);
+  assert.match(viteConfig, /three-core/);
+  assert.match(audioPlayer, /selectedTrackId/);
+  assert.match(audioPlayer, /onSelectTrack/);
+  assert.match(experience, /selectedTrackId/);
+  assert.match(experience, /onSelectHotspot/);
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
 });
 

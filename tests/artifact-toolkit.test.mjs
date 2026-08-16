@@ -5,6 +5,7 @@ import path from "node:path";
 import test from "node:test";
 import { checkArtifactToolkit, formatArtifactCheckReport } from "../scripts/artifact-check.mjs";
 import { scaffoldArtifact, validateArtifactArguments } from "../scripts/artifact-new.mjs";
+import { validateArtifactCatalog } from "../app/heritage-data.ts";
 
 async function fixtureRoot() {
   const root = await mkdtemp(path.join(os.tmpdir(), "artifact-toolkit-"));
@@ -146,6 +147,32 @@ test("artifact:check validates review dates and formal source completeness", asy
   const report = formatArtifactCheckReport(await checkArtifactToolkit({ root, artifacts: [artifact] }));
   assert.match(report, /内容审核日期必须使用 YYYY-MM-DD 格式/);
   assert.match(report, /正式来源必须填写出版物信息或可核对链接/);
+});
+
+test("artifact:check validates model hotspot source and audio references", async (t) => {
+  const root = await fixtureRoot();
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const base = {
+    id: "artifact-001", slug: "existing", displayIndex: "001", name: "热点校验测试",
+    summary: "测试摘要", contentClassification: "digital_demonstration",
+    reviewStatus: "draft", isDemo: true, catalogVisibility: "demo",
+    sources: [{ id: "source-1", name: "测试来源", href: "https://example.test/source" }],
+    audio: [{ id: "track", name: "测试音", classification: "digitally_synthesized", isBrowserGenerated: true }],
+    model: { classification: "programmatic_demo", hasRealFile: false },
+  };
+  const validArtifact = { ...base, model: { ...base.model, hotspots: [
+    { id: "hotspot-1", name: "热点一", position: [0, 0, 0], sourceId: "source-1", audioId: "track" },
+  ] } };
+  const valid = await checkArtifactToolkit({ root, artifacts: [validArtifact], catalogIssues: validateArtifactCatalog([validArtifact]) });
+  assert.deepEqual(valid, { errors: [], warnings: [] });
+  const invalidArtifact = { ...base, model: { ...base.model, hotspots: [
+    { id: "hotspot-2", name: "热点二", audioId: "missing-track" },
+    { id: "hotspot-3", name: "热点三", sourceId: "missing-source" },
+  ] } };
+  const invalid = await checkArtifactToolkit({ root, artifacts: [invalidArtifact], catalogIssues: validateArtifactCatalog([invalidArtifact]) });
+  const report = formatArtifactCheckReport(invalid);
+  assert.match(report, /热点音频 missing-track 不存在/);
+  assert.match(report, /热点来源 missing-source 不存在/);
 });
 
 test("artifact:check blocks public files accidentally placed under an internal draft", async (t) => {
