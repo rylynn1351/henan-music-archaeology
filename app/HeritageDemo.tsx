@@ -2,11 +2,11 @@ import Link from "next/link";
 import ArtifactOverview from "./components/ArtifactOverview";
 import {
   featuredArtifact,
-  getDisplayableArtifacts,
+  getCatalogArtifacts,
 } from "./heritage-data";
 
 export default function HeritageDemo() {
-  const displayableArtifacts = getDisplayableArtifacts();
+  const catalogArtifacts = getCatalogArtifacts();
   const highlights = featuredArtifact.highlights ?? [];
   const featuredDetailHref = `/artifacts/${encodeURIComponent(featuredArtifact.slug)}`;
 
@@ -51,7 +51,7 @@ export default function HeritageDemo() {
         <div className="scroll-cue"><span /> 向下探索</div>
       </section>
 
-      <ArtifactOverview artifacts={displayableArtifacts} />
+      <ArtifactOverview artifacts={catalogArtifacts} />
 
       <footer>
         <div className="brand footer-brand">

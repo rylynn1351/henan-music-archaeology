@@ -31,7 +31,6 @@ export default function ArtifactCard({ artifact }: ArtifactCardProps) {
         <div className="artifact-card-badges">
           <span>{getReviewStatusLabel(artifact.reviewStatus)}</span>
           {artifact.isDemo ? <span className="demo">Demo</span> : null}
-          {artifact.isPlaceholder ? <span>占位资料</span> : null}
         </div>
       </div>
 
@@ -53,14 +52,16 @@ export default function ArtifactCard({ artifact }: ArtifactCardProps) {
           </dl>
         ) : null}
 
-        <p className="artifact-card-summary">{artifact.summary ?? "资料待补充"}</p>
+        <p className="artifact-card-summary">
+          {artifact.isPlaceholder ? "资料整理中，完成专业审核后将在此更新。" : artifact.summary ?? "资料待补充"}
+        </p>
 
         <Link
           className="artifact-card-action"
           href={detailHref}
-          aria-label={`查看${artifact.name}详情`}
+          aria-label={artifact.isPlaceholder ? `查看${artifact.name}资料整理状态` : `查看${artifact.name}详情`}
         >
-          查看详情 <span aria-hidden="true">→</span>
+          {artifact.isPlaceholder ? "查看整理进度" : "查看详情"} <span aria-hidden="true">→</span>
         </Link>
       </div>
     </article>

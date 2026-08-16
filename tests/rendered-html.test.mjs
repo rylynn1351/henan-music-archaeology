@@ -4,6 +4,8 @@ import { access, readFile } from "node:fs/promises";
 import test from "node:test";
 import {
   artifacts,
+  getCatalogArtifactBySlug,
+  getCatalogArtifacts,
   getAllArtifacts,
   getArtifactBySlug,
   getArtifactDisplayFacts,
@@ -17,6 +19,7 @@ import {
   getPrimaryImage,
   getReviewStatusLabel,
   getSourcesForArtifact,
+  validateArtifactCatalog,
 } from "../app/heritage-data.ts";
 import {
   GUIDE_NO_MATCH_ANSWER,
@@ -77,6 +80,8 @@ function createTestArtifact(overrides = {}) {
     artifactType: "测试类型",
     contentClassification: "archaeological_fact",
     reviewStatus: "approved",
+    reviewer: "测试审核人",
+    reviewedAt: "2026-08-16",
     isDemo: false,
     isPlaceholder: false,
     catalogVisibility: "public",
@@ -123,8 +128,8 @@ test("server-renders the Jiahu heritage demo", async () => {
   assert.match(html, /形制丰富/);
   assert.match(html, /当前为概念验证Demo，非最终研究成果/);
   assert.match(html, /文物总览/);
-  assert.match(html, /当前已公开或允许展示的文物/);
-  assert.match(html, /data-artifact-count="1"/);
+  assert.match(html, /当前已公开、演示或正在整理的文物/);
+  assert.match(html, /data-artifact-count="3"/);
   assert.match(html, /data-artifact-card="jiahu-bone-flute"/);
   assert.match(html, /查看贾湖骨笛详情/);
   assert.match(html, /href="\/artifacts\/jiahu-bone-flute"/);
@@ -133,7 +138,10 @@ test("server-renders the Jiahu heritage demo", async () => {
   assert.match(html, /按材质筛选/);
   assert.match(html, /按器物类型筛选/);
   assert.match(html, /重置筛选/);
-  assert.match(html, /data-filtered-artifact-count="1"/);
+  assert.match(html, /data-filtered-artifact-count="3"/);
+  assert.match(html, /待公布文物 002/);
+  assert.match(html, /待公布文物 003/);
+  assert.match(html, /查看整理进度/);
   assert.match(html, /待专业成员审核/);
   assert.doesNotMatch(html, /id="artifact"|id="timeline"|id="experience"|id="guide"/);
   assert.doesNotMatch(html, /内容审核状态|最后更新时间|数字讲解员/);
@@ -189,10 +197,21 @@ test("server-renders a displayable artifact from its standalone slug route", asy
   assert.match(html, /待专业成员审核/);
   assert.match(html, /资料来源/);
   assert.match(html, /当前为概念验证Demo，非最终研究成果/);
-  assert.match(html, /骨笛形制 · 交互模型/);
+  assert.match(html, /贾湖骨笛(?:<!-- -->)? · 交互模型/);
   assert.match(html, /合成音色占位演示/);
   assert.match(html, /数字讲解员/);
   assert.doesNotMatch(html, /文物总览 · COLLECTION/);
+});
+
+test("server-renders public placeholder details without professional modules", async () => {
+  const response = await render("/artifacts/artifact-002");
+  assert.equal(response.status, 200);
+  const html = await response.text();
+  assert.match(html, /待公布文物 002/);
+  assert.match(html, /资料整理中/);
+  assert.match(html, /不会自动补充或推断年代、材质、用途、声音及研究结论/);
+  assert.match(html, /(?:name="robots" content="[^"]*noindex|content="[^"]*noindex[^"]*" name="robots")/);
+  assert.doesNotMatch(html, /内容分类|资料来源|GENERAL MODEL VIEWER|声音体验|数字讲解员/);
 });
 
 test("unknown and malformed artifact routes render a friendly 404", async () => {
@@ -230,6 +249,10 @@ test("keeps artifact data, sources, warnings, and assets explicit", async () => 
     notFoundPage,
     routeErrorPage,
     packageJson,
+    jiahuRecord,
+    modelViewer,
+    audioPlayer,
+    guideComponent,
   ] = await Promise.all([
     readFile(new URL("../app/heritage-data.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/HeritageDemo.tsx", import.meta.url), "utf8"),
@@ -244,6 +267,10 @@ test("keeps artifact data, sources, warnings, and assets explicit", async () => 
     readFile(new URL("../app/artifacts/[slug]/not-found.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/artifacts/[slug]/error.tsx", import.meta.url), "utf8"),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
+    readFile(new URL("../app/artifact-records/jiahu-bone-flute.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/components/ArtifactModelViewer.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/components/ArtifactAudioPlayer.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/components/ArtifactGuide.tsx", import.meta.url), "utf8"),
     access(new URL("public/jiahu-bone-flute.jpg", root)),
   ]);
 
@@ -251,9 +278,9 @@ test("keeps artifact data, sources, warnings, and assets explicit", async () => 
   assert.match(data, /export const artifacts: Artifact\[\]/);
   assert.match(data, /contentClassification/);
   assert.match(data, /reviewStatus/);
-  assert.match(data, /updatedAt: "2026-07-14"/);
-  assert.match(data, /河南博物院/);
-  assert.match(data, /doi\.org\/10\.1038\/43865/);
+  assert.match(jiahuRecord, /updatedAt: "2026-07-14"/);
+  assert.match(jiahuRecord, /河南博物院/);
+  assert.match(jiahuRecord, /doi\.org\/10\.1038\/43865/);
   assert.match(detail, /getArtifactDisplayFacts/);
   assert.match(detail, /getContentClassificationLabel/);
   assert.match(detail, /artifact\.reviewStatus/);
@@ -275,35 +302,34 @@ test("keeps artifact data, sources, warnings, and assets explicit", async () => 
   assert.match(moduleErrorBoundary, /getDerivedStateFromError/);
   assert.match(guideUtilsSource, /GUIDE_NO_MATCH_ANSWER/);
   assert.match(homePage, /ArtifactOverview/);
-  assert.match(homePage, /getDisplayableArtifacts/);
+  assert.match(homePage, /getCatalogArtifacts/);
   assert.doesNotMatch(homePage, /ArtifactDetail|OrbitControls|createDemoWave|GuideChat/);
   assert.match(experience, /ArtifactDetail/);
-  assert.match(experience, /OrbitControls/);
-  assert.match(experience, /createDemoWave/);
-  assert.match(experience, /function GuideChat/);
-  assert.match(experience, /data-module-fallback="3d"/);
-  assert.match(experience, /data-module-fallback="audio"/);
-  assert.match(experience, /data-module-fallback="guide"/);
+  assert.match(experience, /lazy\(\(\) => import\("\.\/components\/ArtifactModelViewer"\)\)/);
+  assert.match(modelViewer, /GLTFLoader/);
+  assert.match(modelViewer, /data-module-fallback="3d"/);
+  assert.match(audioPlayer, /createDemoWave/);
+  assert.match(audioPlayer, /URL\.revokeObjectURL/);
+  assert.match(audioPlayer, /data-module-fallback="audio"/);
+  assert.match(guideComponent, /data-module-fallback="guide"/);
   assert.match(experience, /时间线资料待补充/);
   assert.match(experience, /资料来源待团队提供/);
-  assert.match(experience, /当前暂无问答资料/);
   assert.match(experience, /ModuleErrorBoundary/);
-  assert.match(experience, /URL\.revokeObjectURL/);
   assert.match(routePage, /getDisplayableArtifactBySlug/);
   assert.match(routePage, /ArtifactExperience/);
   assert.match(routePage, /notFound\(\)/);
   assert.doesNotMatch(routePage, /贾湖|jiahu-bone-flute/);
   assert.match(notFoundPage, /未找到可展示的文物/);
   assert.match(routeErrorPage, /文物资料暂时无法读取/);
-  assert.match(data, /非文物扫描/);
-  assert.match(data, /不是贾湖骨笛原件或复原件录音/);
+  assert.match(jiahuRecord, /非文物扫描/);
+  assert.match(jiahuRecord, /不是贾湖骨笛原件或复原件录音/);
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
 });
 
 test("keeps the Jiahu artifact in the unified multi-artifact structure", () => {
   const allArtifacts = getAllArtifacts();
   assert.ok(Array.isArray(allArtifacts));
-  assert.equal(allArtifacts.length, 1, "No unreviewed second artifact should be added in this task");
+  assert.equal(allArtifacts.length, 3);
 
   const ids = new Set(allArtifacts.map((artifact) => artifact.id));
   const slugs = new Set(allArtifacts.map((artifact) => artifact.slug));
@@ -327,6 +353,9 @@ test("keeps the Jiahu artifact in the unified multi-artifact structure", () => {
   assert.equal(getArtifactBySlug("测试"), undefined);
   assert.equal(getDisplayableArtifactBySlug("jiahu-bone-flute"), artifact);
   assert.equal(getDisplayableArtifactBySlug("does-not-exist"), undefined);
+  assert.equal(getDisplayableArtifactBySlug("artifact-002"), undefined);
+  assert.equal(getCatalogArtifactBySlug("artifact-002")?.reviewStatus, "placeholder");
+  assert.deepEqual(getCatalogArtifacts().map((item) => item.slug), ["jiahu-bone-flute", "artifact-002", "artifact-003"]);
 
   const audio = getPrimaryAudio(artifact);
   assert.ok(audio);
@@ -440,6 +469,46 @@ test("only returns artifacts explicitly allowed in the catalog", () => {
     getDisplayableArtifactBySlug(approvedPublicArtifact.slug, fixtures),
     approvedPublicArtifact,
   );
+});
+
+test("validates publication, references, media sources, and placeholder boundaries", () => {
+  assert.deepEqual(validateArtifactCatalog(artifacts), []);
+
+  const base = createTestArtifact({
+    id: "validation-a",
+    slug: "validation-a",
+    displayIndex: "900",
+    reviewer: undefined,
+    reviewedAt: undefined,
+    relatedArtifactIds: ["missing-artifact"],
+    images: [{ id: "image-a", src: "/missing.jpg", alt: "测试图片", isPrimary: true }],
+    model: { classification: "real_scan", hasRealFile: true, fallbackImageId: "missing-image" },
+    audio: [{ id: "audio-a", name: "测试音频", classification: "original_artifact_recording", isBrowserGenerated: false }],
+  });
+  const duplicate = createTestArtifact({
+    id: "validation-a",
+    slug: "validation-a",
+    displayIndex: "900",
+  });
+  const unsafePlaceholder = {
+    ...createTestArtifact({ id: "placeholder-validation", slug: "placeholder-validation", displayIndex: "901" }),
+    reviewStatus: "placeholder",
+    isPlaceholder: true,
+    period: "未经审核时期",
+  };
+  const issues = validateArtifactCatalog([base, duplicate, unsafePlaceholder]);
+  const fields = issues.map((issue) => issue.field);
+  assert.ok(fields.includes("id"));
+  assert.ok(fields.includes("slug"));
+  assert.ok(fields.includes("displayIndex"));
+  assert.ok(fields.includes("review"));
+  assert.ok(fields.includes("relatedArtifactIds"));
+  assert.ok(fields.includes("images"));
+  assert.ok(fields.includes("model.glbPath"));
+  assert.ok(fields.includes("model.fallbackImageId"));
+  assert.ok(fields.includes("audio.filePath"));
+  assert.ok(fields.includes("audio"));
+  assert.ok(fields.includes("placeholder"));
 });
 
 test("searches artifact names with trimming, partial matching, and case folding", () => {

@@ -50,7 +50,7 @@ export default function ArtifactOverview({ artifacts }: ArtifactOverviewProps) {
           <h2 id="artifact-overview-title">从一件文物，建立可扩展的数字档案</h2>
         </div>
         <div className="artifact-overview-intro">
-          <p>当前已公开或允许展示的文物</p>
+          <p>当前已公开、演示或正在整理的文物</p>
           <strong>{artifacts.length}<span> 件</span></strong>
           <small>后续文物经团队审核后，将使用同一数据结构和卡片继续扩展。</small>
         </div>
@@ -125,7 +125,7 @@ export default function ArtifactOverview({ artifacts }: ArtifactOverviewProps) {
                 {filteredArtifacts.length}
               </strong>
               件
-              <span>共 {artifacts.length} 件可展示文物</span>
+              <span>共 {artifacts.length} 件目录记录</span>
             </p>
             <button
               type="button"

@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import ArtifactExperience from "../../ArtifactExperience";
+import ArtifactComingSoon from "../../components/ArtifactComingSoon";
 import {
+  getCatalogArtifactBySlug,
+  getCatalogArtifacts,
   getDisplayableArtifactBySlug,
-  getDisplayableArtifacts,
+  isPlaceholderArtifact,
 } from "../../heritage-data";
 
 type ArtifactPageProps = {
@@ -13,7 +16,7 @@ type ArtifactPageProps = {
 };
 
 export function generateStaticParams() {
-  return getDisplayableArtifacts().map((artifact) => ({
+  return getCatalogArtifacts().map((artifact) => ({
     slug: artifact.slug,
   }));
 }
@@ -22,7 +25,7 @@ export async function generateMetadata({
   params,
 }: ArtifactPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const artifact = getDisplayableArtifactBySlug(slug);
+  const artifact = getCatalogArtifactBySlug(slug);
 
   if (!artifact) {
     return {
@@ -31,6 +34,14 @@ export async function generateMetadata({
         index: false,
         follow: false,
       },
+    };
+  }
+
+  if (isPlaceholderArtifact(artifact)) {
+    return {
+      title: `${artifact.name}｜资料整理中`,
+      description: artifact.summary,
+      robots: { index: false, follow: false },
     };
   }
 
@@ -53,11 +64,18 @@ export async function generateMetadata({
 
 export default async function ArtifactPage({ params }: ArtifactPageProps) {
   const { slug } = await params;
-  const artifact = getDisplayableArtifactBySlug(slug);
+  const catalogArtifact = getCatalogArtifactBySlug(slug);
 
-  if (!artifact) {
+  if (!catalogArtifact) {
     notFound();
   }
+
+  if (isPlaceholderArtifact(catalogArtifact)) {
+    return <ArtifactComingSoon artifact={catalogArtifact} />;
+  }
+
+  const artifact = getDisplayableArtifactBySlug(slug);
+  if (!artifact) notFound();
 
   return <ArtifactExperience artifact={artifact} />;
 }
