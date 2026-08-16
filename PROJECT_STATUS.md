@@ -7,6 +7,7 @@
 - 项目路径：`D:\zzu\competence\音韵河南\henan-music-archaeology`
 - 当前分支：`codex/handoff-baseline`
 - 远程仓库：`https://github.com/yyyyyyuts/henan-music-archaeology.git`
+- 提交状态：本地 `verify` 与 GitHub Actions `Quality gate` 均通过，当前分支已推送至 `origin`
 - Node.js：本地 v24.15.0；CI 使用 Node.js 22
 - 内容记录：3 条；贾湖骨笛为明确标注的 Demo，文物 002、003 为公开“资料整理中”占位记录
 - 正式新增文物：0 条；本轮未录入或推断新的考古事实
