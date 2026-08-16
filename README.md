@@ -51,8 +51,22 @@ npm.cmd run start
 
 ## 新增文物
 
-1. 复制 `app/artifact-records/template.ts` 为新的文物文件，并立即确定不会再变化的 `id`、`slug` 和 `displayIndex`。
-2. 只录入团队提供并标明来源、审核状态的专业资料；图片、GLB 和音频同时填写来源与授权状态。
-3. 在 `app/artifact-records/index.ts` 注册记录。占位阶段使用 `reviewStatus: "placeholder"`，公开整理页使用 `catalogVisibility: "public"`。
-4. 资料完成审核后填写 `reviewer`、`reviewedAt`，把记录改为 `approved` 或 `published`；页面、卡片、3D 和播放器无需复制。
-5. 运行完整质量检查。重复编号、失效引用、不完整审核信息和缺失资产授权会阻止构建或测试。
+团队先使用仓库外层私有 `项目资料/文物资料交付模板/` 中的 Word 和素材目录交付资料。空缺字段统一填写“待确认”，内部 Word、授权书和未审核素材不得进入网站 `public/`。
+
+创建一件内部草稿：
+
+```powershell
+npm.cmd run artifact:new -- --index 004 --slug stable-slug --name "文物名称"
+```
+
+该命令会检查编号和 slug、生成独立数据文件并自动注册。新记录固定为 `draft + internal`；生成后不得修改 `id`、`slug` 或 `displayIndex`，名称可以按审核结果更新。
+
+录入时：
+
+1. 将 Word 内容逐项复制到数据文件，时间线和问答保留稳定 `id`。
+2. 在 `sources` 记录来源，在 `fieldReferences` 使用字段路径关联来源及页码、章节或链接，例如 `timeline.timeline-004-01.text`。
+3. 只有审核和授权完成的正式素材才能放入 `public/artifacts/<slug>/images/`、`models/`、`audio/`；原始授权文件仍留在私有目录。
+4. 运行 `npm.cmd run artifact:check`。命令会按文物输出中文错误和警告，并检查注册、引用、文件、格式、审核和授权。
+5. 预检通过后人工核对 `contentVersion`、`reviewer`、`reviewedAt`，再手动把状态改为 `approved` 或 `published`。项目不提供自动发布命令。
+
+GLB 记录至少填写 `glbPath`、`unit`、`scale`、`rotation`、`fallbackImageId`、`classification`、`sourceId` 和 `authorizationStatus`。页面、卡片、3D 和播放器不需要复制。

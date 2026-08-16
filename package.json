@@ -10,8 +10,10 @@
     "build": "vinext build",
     "start": "node scripts/start-production.mjs",
     "typecheck": "tsc --noEmit --incremental false",
-    "test": "npm run build && node --experimental-strip-types --test tests/rendered-html.test.mjs",
+    "test": "npm run build && node --experimental-strip-types --test tests/artifact-toolkit.test.mjs tests/rendered-html.test.mjs",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
+    "artifact:new": "node scripts/artifact-new.mjs",
+    "artifact:check": "node --experimental-strip-types scripts/artifact-check.mjs",
     "db:generate": "drizzle-kit generate"
   },
   "dependencies": {

@@ -29,9 +29,22 @@ export type ModelUnit = "mm" | "cm" | "m";
 export type ArtifactFilterCriteria = { query?: string; period?: string; material?: string; artifactType?: string };
 export type ArtifactFilterOptions = { periods: string[]; materials: string[]; artifactTypes: string[] };
 export type ArtifactFact = { label: string; value: string };
-export type TimelineItem = { year: string; title: string; text: string };
-export type GuideQuestion = { question: string; answer: string; keywords: string[] };
-export type SourceReference = { id: string; name: string; note?: string; href?: string };
+export type TimelineItem = { id: string; year: string; title: string; text: string };
+export type GuideQuestion = { id: string; question: string; answer: string; keywords: string[] };
+export type SourceReference = {
+  id: string;
+  name: string;
+  authors?: string[];
+  publication?: string;
+  note?: string;
+  href?: string;
+};
+export type ArtifactFieldReference = {
+  field: string;
+  sourceIds: string[];
+  locator?: string;
+  note?: string;
+};
 export type ArtifactImage = {
   id: string;
   src: string;
@@ -108,6 +121,8 @@ export type Artifact = {
   audio?: ArtifactAudio[];
   tags?: string[];
   relatedArtifactIds?: string[];
+  contentVersion?: string;
+  fieldReferences?: ArtifactFieldReference[];
   contentClassification: ContentClassification;
   reviewStatus: ReviewStatus;
   reviewer?: string;
@@ -244,9 +259,49 @@ export function validateArtifactCatalog(source: readonly Artifact[] = artifacts)
       if (seen[field].has(value)) add(artifact, field, `${field} 必须全局唯一`);
       seen[field].add(value);
     });
-    const sourceIds = new Set((artifact.sources ?? []).map((item) => item.id));
-    const imageIds = new Set((artifact.images ?? []).map((item) => item.id));
-    const audioIds = new Set((artifact.audio ?? []).map((item) => item.id));
+    const sourceIds = new Set<string>();
+    const imageIds = new Set<string>();
+    const audioIds = new Set<string>();
+    artifact.sources?.forEach((item) => {
+      if (sourceIds.has(item.id)) add(artifact, "sources.id", `来源 ID ${item.id} 必须在当前文物内唯一`);
+      sourceIds.add(item.id);
+    });
+    artifact.images?.forEach((item) => {
+      if (imageIds.has(item.id)) add(artifact, "images.id", `图片 ID ${item.id} 必须在当前文物内唯一`);
+      imageIds.add(item.id);
+    });
+    artifact.audio?.forEach((item) => {
+      if (audioIds.has(item.id)) add(artifact, "audio.id", `音频 ID ${item.id} 必须在当前文物内唯一`);
+      audioIds.add(item.id);
+    });
+    const timelineIds = new Set<string>();
+    const questionIds = new Set<string>();
+    artifact.timeline?.forEach((item) => {
+      if (timelineIds.has(item.id)) add(artifact, "timeline.id", `时间线 ID ${item.id} 必须在当前文物内唯一`);
+      timelineIds.add(item.id);
+    });
+    artifact.questions?.forEach((item) => {
+      if (questionIds.has(item.id)) add(artifact, "questions.id", `问答 ID ${item.id} 必须在当前文物内唯一`);
+      questionIds.add(item.id);
+    });
+    const referencedFields = new Set<string>();
+    artifact.fieldReferences?.forEach((reference) => {
+      if (!reference.field.trim()) add(artifact, "fieldReferences.field", "字段引用必须指定字段路径");
+      if (referencedFields.has(reference.field)) add(artifact, "fieldReferences.field", `字段 ${reference.field} 只能保留一条引用映射`);
+      referencedFields.add(reference.field);
+      if (!reference.sourceIds.length) add(artifact, "fieldReferences.sourceIds", `字段 ${reference.field} 至少需要一个来源`);
+      reference.sourceIds.forEach((sourceId) => {
+        if (!sourceIds.has(sourceId)) add(artifact, "fieldReferences.sourceIds", `字段 ${reference.field} 引用了不存在的来源 ${sourceId}`);
+      });
+      if (reference.field.startsWith("timeline.")) {
+        const timelineId = reference.field.slice("timeline.".length).split(".")[0];
+        if (!timelineIds.has(timelineId)) add(artifact, "fieldReferences.field", `字段引用指向不存在的时间线 ${timelineId}`);
+      }
+      if (reference.field.startsWith("questions.")) {
+        const questionId = reference.field.slice("questions.".length).split(".")[0];
+        if (!questionIds.has(questionId)) add(artifact, "fieldReferences.field", `字段引用指向不存在的问答 ${questionId}`);
+      }
+    });
     artifact.relatedArtifactIds?.forEach((id) => { if (!allIds.has(id)) add(artifact, "relatedArtifactIds", `关联文物 ${id} 不存在`); });
     artifact.images?.forEach((image) => {
       if (image.sourceId && !sourceIds.has(image.sourceId)) add(artifact, "images.sourceId", `图片来源 ${image.sourceId} 不存在`);
@@ -264,7 +319,7 @@ export function validateArtifactCatalog(source: readonly Artifact[] = artifacts)
       if (audio.sourceId && !sourceIds.has(audio.sourceId)) add(artifact, "audio.sourceId", `音频来源 ${audio.sourceId} 不存在`);
       if (artifact.catalogVisibility === "public" && !isPlaceholderArtifact(artifact) && (!audio.sourceId || !audio.authorizationStatus)) add(artifact, "audio", "公开音频必须记录来源和授权状态");
     });
-    if (["approved", "published"].includes(artifact.reviewStatus) && (!artifact.reviewer || !artifact.reviewedAt)) add(artifact, "review", "已审核或已发布记录必须填写审核人和审核时间");
+    if (["approved", "published"].includes(artifact.reviewStatus) && (!artifact.reviewer || !artifact.reviewedAt || !artifact.contentVersion)) add(artifact, "review", "已审核或已发布记录必须填写资料版本、审核人和审核时间");
     if (isPlaceholderArtifact(artifact)) {
       const forbidden = [artifact.period, artifact.material, artifact.artifactType, artifact.detailedDescription, artifact.researchNote, ...(artifact.timeline ?? []).map((item) => item.text)];
       if (forbidden.some(Boolean)) add(artifact, "placeholder", "占位记录不得包含未经审核的专业陈述");
