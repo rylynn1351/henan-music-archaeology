@@ -112,6 +112,9 @@ test("server-renders the Jiahu heritage demo", async () => {
 
   const html = await response.text();
   const visibleDocument = html.split('<script id="_R_">')[0];
+  assert.match(html, /<title>贾湖骨笛数字展示 Demo｜豫音焕新声<\/title>/);
+  assert.match(html, /property="og:title" content="豫音焕新声｜贾湖骨笛数字展示 Demo"/);
+  assert.match(html, /property="og:locale" content="zh_CN"/);
   assert.match(html, /豫音焕新声/);
   assert.match(html, /贾湖骨笛/);
   assert.match(html, /2026 大学生创新训练计划/);
@@ -175,6 +178,8 @@ test("server-renders a displayable artifact from its standalone slug route", asy
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
 
   const html = await response.text();
+  assert.match(html, /<title>贾湖骨笛数字展示｜豫音焕新声<\/title>/);
+  assert.match(html, /property="og:title" content="贾湖骨笛数字展示｜豫音焕新声"/);
   assert.match(html, /贾湖骨笛/);
   assert.match(html, /返回文物总览/);
   assert.match(html, /href="\/#artifacts"/);
@@ -199,6 +204,10 @@ test("unknown and malformed artifact routes render a friendly 404", async () => 
     assert.equal(response.status, 404);
 
     const html = await response.text();
+    assert.match(
+      html,
+      /(?:name="robots" content="[^"]*noindex|content="[^"]*noindex[^"]*" name="robots")/,
+    );
     assert.match(html, /未找到可展示的文物/);
     assert.match(html, /返回文物总览/);
     assert.match(html, /href="\/#artifacts"/);
