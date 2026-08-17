@@ -17,7 +17,7 @@ export default function ArtifactRouteError({ reset }: ArtifactRouteErrorProps) {
           <button className="button primary" type="button" onClick={reset}>
             重新尝试
           </button>
-          <Link className="button route-secondary" href="/#artifacts">
+          <Link className="button route-secondary" href="/artifacts">
             返回文物总览
           </Link>
         </div>

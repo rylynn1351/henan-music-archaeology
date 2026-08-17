@@ -7,7 +7,7 @@ export const metadata: Metadata = {
     default: "豫音焕新声",
     template: "%s｜豫音焕新声",
   },
-  description: "河南音乐考古资源数字化展示平台演示版。",
+  description: "河南音乐考古资源数字化展示平台。",
   keywords: [
     "河南音乐考古",
     "贾湖骨笛",

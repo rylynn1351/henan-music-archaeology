@@ -18,11 +18,13 @@ export default function ArtifactModelViewer({
   fallbackImage,
   selectedHotspotId,
   onSelectHotspot,
+  audioStatusHint,
 }: {
   model: ArtifactModel;
   fallbackImage?: ArtifactImageData;
   selectedHotspotId?: string;
   onSelectHotspot?: (hotspot: ArtifactModelHotspot | null) => void;
+  audioStatusHint?: string;
 }) {
   const mountRef = useRef<HTMLDivElement>(null);
   const hotspotLayerRef = useRef<HTMLDivElement>(null);
@@ -201,7 +203,7 @@ export default function ArtifactModelViewer({
           <span className="model-hotspot-panel-index">热点 {selectedHotspotIndex + 1}</span>
           <strong>{selectedHotspot.name}</strong>
           {selectedHotspot.description ? <p>{selectedHotspot.description}</p> : <p>当前热点暂未提供说明。</p>}
-          {selectedHotspot.audioId ? <p className="model-hotspot-audio-hint">关联音频已切换至下方播放器。</p> : null}
+          {audioStatusHint ? <p className="model-hotspot-audio-hint">{audioStatusHint}</p> : null}
           <button type="button" className="model-hotspot-close" onClick={() => onSelectHotspot?.(null)}>关闭</button>
         </div>
       ) : null}

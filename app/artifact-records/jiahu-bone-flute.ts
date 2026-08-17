@@ -67,33 +67,6 @@ export const jiahuBoneFlute: Artifact = {
     fallbackImageId: "jiahu-primary-image",
     ariaLabel: "可旋转的骨笛功能演示模型",
     notice: "功能演示模型 · 非文物扫描 · 不代表真实比例、纹理与复原结论",
-    hotspots: [
-      {
-        id: "jiahu-demo-hotspot-01",
-        name: "演示热点 · 管身近端",
-        position: [0, -2.0, 0.29],
-        description: "交互演示：展示热点说明与取消选中交互。此位置不代表任何考古标注或研究结论。",
-      },
-      {
-        id: "jiahu-demo-hotspot-02",
-        name: "演示热点 · 管身中段",
-        position: [0, -0.6, 0.28],
-        audioId: "jiahu-synthetic-demo",
-        description: "交互演示：点击后下方播放器将切换到关联的合成演示音频。此位置不代表任何考古标注或研究结论。",
-      },
-      {
-        id: "jiahu-demo-hotspot-03",
-        name: "演示热点 · 管身远端",
-        position: [0, 0.9, 0.27],
-        description: "交互演示：展示热点说明与取消选中交互。此位置不代表任何考古标注或研究结论。",
-      },
-      {
-        id: "jiahu-demo-hotspot-04",
-        name: "演示热点 · 管尾端",
-        position: [0, 2.1, 0.26],
-        description: "交互演示：展示热点说明与取消选中交互。此位置不代表任何考古标注或研究结论。",
-      },
-    ],
   },
   audio: [{
     id: "jiahu-synthetic-demo",

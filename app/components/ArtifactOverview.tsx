@@ -158,7 +158,7 @@ export default function ArtifactOverview({ artifacts }: ArtifactOverviewProps) {
       )}
 
       <p className="artifact-overview-notice">
-        当前为概念验证Demo，展示内容与数字资产仍需持续审核，不代表最终研究成果。
+        展示内容与数字资产仍需持续审核。
       </p>
     </section>
   );

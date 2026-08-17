@@ -1,5 +1,5 @@
 import Link from "next/link";
-import ArtifactOverview from "./components/ArtifactOverview";
+import ArtifactCard from "./components/ArtifactCard";
 import {
   featuredArtifact,
   getCatalogArtifacts,
@@ -19,16 +19,16 @@ export default function HeritageDemo() {
         </a>
         <nav aria-label="主要导航">
           <a href="#top">项目首页</a>
-          <a href="#artifacts">文物总览</a>
+          <Link href="/artifacts">文物总览</Link>
         </nav>
-        <a className="header-action" href="#artifacts">浏览文物</a>
+        <Link className="header-action" href="/artifacts">浏览文物</Link>
       </header>
 
       <section className="hero" id="top">
         <div className="hero-image" aria-hidden="true" />
         <div className="hero-shade" />
         <div className="hero-content">
-          <div className="project-badge"><span /> 2026 大学生创新训练计划 · 项目概念验证</div>
+          <div className="project-badge"><span /> 2026 大学生创新训练计划</div>
           <p className="hero-kicker">A DIGITAL ECHO OF ANCIENT HENAN</p>
           <h1>一管骨笛<br /><em>九千年回响</em></h1>
           <p className="hero-lead">
@@ -36,10 +36,9 @@ export default function HeritageDemo() {
             让河南音乐考古资源被更多人看见、听见、理解。
           </p>
           <div className="hero-actions">
-            <a className="button primary" href="#artifacts">开始探索 <span>→</span></a>
+            <Link className="button primary" href="/artifacts">开始探索 <span>→</span></Link>
             <Link className="button ghost" href={featuredDetailHref}>查看重点文物</Link>
           </div>
-          <p className="concept-disclaimer">当前为概念验证Demo，非最终研究成果</p>
           <div className="hero-stats">
             {highlights.map((highlight) => (
               <div key={`${highlight.value}-${highlight.label}`}>
@@ -51,15 +50,26 @@ export default function HeritageDemo() {
         <div className="scroll-cue"><span /> 向下探索</div>
       </section>
 
-      <ArtifactOverview artifacts={catalogArtifacts} />
+      <section className="section home-preview-section" id="artifacts" aria-labelledby="home-preview-title">
+        <div className="section-heading split-heading">
+          <div>
+            <span className="eyebrow">文物精选 · COLLECTION</span>
+            <h2 id="home-preview-title">从一件文物，建立可扩展的数字档案</h2>
+          </div>
+          <Link className="button route-secondary" href="/artifacts">查看全部文物 <span aria-hidden="true">→</span></Link>
+        </div>
+        <div className="artifact-card-grid">
+          {catalogArtifacts.slice(0, 3).map((artifact) => <ArtifactCard artifact={artifact} key={artifact.id} />)}
+        </div>
+      </section>
 
       <footer>
         <div className="brand footer-brand">
           <span className="brand-seal">豫</span>
           <span><strong>豫音焕新声</strong><small>让河南音乐文物重新发声</small></span>
         </div>
-        <p>郑州大学 2026 大学生创新训练计划 · v0.3 演示版本</p>
-        <span>当前为概念验证Demo，非最终研究成果 · 内容待音乐学、考古学成员持续审校</span>
+        <p>郑州大学 2026 大学生创新训练计划 · v0.3 多文物展示</p>
+        <span>内容待音乐学、考古学成员持续审校</span>
       </footer>
     </main>
   );

@@ -47,7 +47,7 @@ export async function generateMetadata({
 
   const description =
     artifact.summary ??
-    `${artifact.name}数字展示页面，包含文物资料、交互演示与资料来源。`;
+    `${artifact.name}数字展示页面，包含文物资料、数字体验与资料来源。`;
 
   return {
     title: `${artifact.name}数字展示`,

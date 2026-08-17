@@ -1,33 +1,16 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useImperativeHandle, useRef, useState, type Ref } from "react";
+import ArtifactWaveform from "./ArtifactWaveform";
+import { createDemoWave } from "../audio-waveform";
+import {
+  applyTrackSourceToElement,
+  attemptTrackPlay,
+  buildPlaybackNotice,
+  type ArtifactAudioPlayerHandle,
+  type HotspotAudioAction,
+} from "../hotspot-audio-link";
 import { getAudioClassificationLabel, type ArtifactAudio } from "../heritage-data";
-
-function createDemoWave(): Blob {
-  const sampleRate = 22050;
-  const duration = 11.2;
-  const samples = new Int16Array(Math.floor(sampleRate * duration));
-  const notes = [293.66, 329.63, 392, 440, 392, 329.63, 293.66, 246.94];
-  const noteLength = duration / notes.length;
-  samples.forEach((_, index) => {
-    const time = index / sampleRate;
-    const noteIndex = Math.min(Math.floor(time / noteLength), notes.length - 1);
-    const local = time - noteIndex * noteLength;
-    const envelope = Math.max(0, Math.min(local / 0.08, 1) * Math.min((noteLength - local) / 0.22, 1));
-    const phase = 2 * Math.PI * notes[noteIndex] * (1 + 0.004 * Math.sin(2 * Math.PI * 5.2 * time)) * time;
-    const breath = (Math.sin(2 * Math.PI * 8300 * time) + Math.sin(2 * Math.PI * 6100 * time)) * 0.018;
-    const sample = envelope * (0.58 * Math.sin(phase) + 0.2 * Math.sin(phase * 2) + 0.08 * Math.sin(phase * 3) + breath);
-    samples[index] = Math.max(-1, Math.min(1, sample)) * 32767;
-  });
-  const buffer = new ArrayBuffer(44 + samples.length * 2);
-  const view = new DataView(buffer);
-  const write = (offset: number, value: string) => { for (let index = 0; index < value.length; index += 1) view.setUint8(offset + index, value.charCodeAt(index)); };
-  write(0, "RIFF"); view.setUint32(4, 36 + samples.length * 2, true); write(8, "WAVE"); write(12, "fmt ");
-  view.setUint32(16, 16, true); view.setUint16(20, 1, true); view.setUint16(22, 1, true); view.setUint32(24, sampleRate, true);
-  view.setUint32(28, sampleRate * 2, true); view.setUint16(32, 2, true); view.setUint16(34, 16, true); write(36, "data");
-  view.setUint32(40, samples.length * 2, true); samples.forEach((sample, index) => view.setInt16(44 + index * 2, sample, true));
-  return new Blob([view], { type: "audio/wav" });
-}
 
 export function AudioPlayerFallback({ audio, message }: { audio?: ArtifactAudio; message: string }) {
   return (
@@ -42,53 +25,118 @@ export default function ArtifactAudioPlayer({
   tracks,
   selectedTrackId,
   onSelectTrack,
+  playerRef,
 }: {
   tracks: readonly ArtifactAudio[];
   selectedTrackId?: string;
   onSelectTrack?: (trackId: string) => void;
+  playerRef?: Ref<ArtifactAudioPlayerHandle>;
 }) {
   const [internalTrackId, setInternalTrackId] = useState(tracks[0]?.id ?? "");
   const [errorMessage, setErrorMessage] = useState<string>();
+  const [playNotice, setPlayNotice] = useState<string>();
   const audioRef = useRef<HTMLAudioElement>(null);
+  const currentObjectUrlRef = useRef<string | undefined>(undefined);
+  const appliedTrackIdRef = useRef<string | undefined>(undefined);
   const effectiveTrackId = selectedTrackId ?? internalTrackId;
   const selectedId = tracks.some((track) => track.id === effectiveTrackId) ? effectiveTrackId : tracks[0]?.id ?? "";
   const selected = tracks.find((track) => track.id === selectedId) ?? tracks[0];
 
+  const applySource = useCallback((element: HTMLAudioElement, track: ArtifactAudio) => {
+    const applied = applyTrackSourceToElement(
+      element,
+      track,
+      () => URL.createObjectURL(createDemoWave()),
+      (url) => URL.revokeObjectURL(url),
+      currentObjectUrlRef.current,
+    );
+    currentObjectUrlRef.current = applied.objectUrl;
+    appliedTrackIdRef.current = track.id;
+  }, []);
+
+  const selectTrack = useCallback((trackId: string) => {
+    const element = audioRef.current;
+    if (!element) return;
+    const target = tracks.find((track) => track.id === trackId);
+    if (!target) return;
+    try {
+      if (target.id !== appliedTrackIdRef.current) applySource(element, target);
+      setInternalTrackId(target.id);
+      onSelectTrack?.(target.id);
+    } catch {
+      setErrorMessage("当前浏览器无法创建或加载这段音频。");
+    }
+  }, [applySource, onSelectTrack, tracks]);
+
+  const playTrack = useCallback((trackId: string): HotspotAudioAction | undefined => {
+    const element = audioRef.current;
+    if (!element) return undefined;
+    const target = tracks.find((track) => track.id === trackId);
+    if (!target) return { kind: "noop", reason: "unknown_audio_id" };
+    const isSameTrack = target.id === appliedTrackIdRef.current;
+    try {
+      if (!isSameTrack) {
+        applySource(element, target);
+        setInternalTrackId(target.id);
+        onSelectTrack?.(target.id);
+      }
+      setPlayNotice(undefined);
+      attemptTrackPlay(element, {
+        isSameTrack,
+        onRejected: (error) => setPlayNotice(buildPlaybackNotice(error, target)),
+      });
+    } catch {
+      setPlayNotice(buildPlaybackNotice(new Error("playback_failed"), target));
+      return { kind: "noop", reason: "play_failed" };
+    }
+    return {
+      kind: "play",
+      trackId: target.id,
+      isSameTrack,
+      trackName: target.name,
+      classification: target.classification,
+    };
+  }, [applySource, onSelectTrack, tracks]);
+
+  useImperativeHandle(playerRef, () => ({ playTrack }), [playTrack]);
+
   useEffect(() => {
     const element = audioRef.current;
     if (!element || !selected) return;
-    let objectUrl: string | undefined;
     let disposed = false;
-    setErrorMessage(undefined);
-    const release = () => {
-      try { element.pause(); element.removeAttribute("src"); element.load(); } catch { /* Continue cleanup. */ }
-      if (objectUrl) { URL.revokeObjectURL(objectUrl); objectUrl = undefined; }
-    };
-    try {
-      if (selected.isBrowserGenerated) { objectUrl = URL.createObjectURL(createDemoWave()); element.src = objectUrl; }
-      else if (selected.filePath) element.src = selected.filePath;
-      else throw new Error("Audio source is unavailable");
-      element.load();
-    } catch {
-      release();
-      queueMicrotask(() => { if (!disposed) setErrorMessage("当前浏览器无法创建或加载这段音频。"); });
+    if (appliedTrackIdRef.current !== selected.id) {
+      try {
+        applySource(element, selected);
+      } catch {
+        queueMicrotask(() => { if (!disposed) setErrorMessage("当前浏览器无法创建或加载这段音频。"); });
+      }
     }
-    return () => { disposed = true; release(); };
-  }, [selected]);
+    return () => {
+      disposed = true;
+      if (appliedTrackIdRef.current !== selected.id) return;
+      try { element.pause(); } catch { /* Ignore unmount cleanup errors. */ }
+      if (currentObjectUrlRef.current) {
+        URL.revokeObjectURL(currentObjectUrlRef.current);
+        currentObjectUrlRef.current = undefined;
+      }
+      appliedTrackIdRef.current = undefined;
+    };
+  }, [applySource, selected]);
 
   if (!selected) return <AudioPlayerFallback message="当前文物尚未提供可用的声音资料。" />;
   if (errorMessage) return <AudioPlayerFallback audio={selected} message={errorMessage} />;
   return (
     <div className="audio-card" data-audio-track-count={tracks.length}>
-      <div className="audio-visual" aria-hidden="true">{Array.from({ length: 34 }, (_, index) => <span key={index} style={{ height: `${18 + ((index * 17) % 54)}%` }} />)}</div>
+      <ArtifactWaveform track={selected} audioRef={audioRef} />
       <div className="audio-copy">
         <span className="eyebrow light">声音体验 · {getAudioClassificationLabel(selected.classification)}</span>
         <h3>{selected.name}</h3>
         {selected.description ? <p>{selected.description}</p> : null}
         {tracks.length > 1 ? (
-          <label className="audio-track-select"><span>选择音频</span><select value={selected.id} onChange={(event) => { const value = event.target.value; setInternalTrackId(value); onSelectTrack?.(value); }}>{tracks.map((track) => <option key={track.id} value={track.id}>{track.name} · {getAudioClassificationLabel(track.classification)}</option>)}</select></label>
+          <label className="audio-track-select"><span>选择音频</span><select value={selected.id} onChange={(event) => { selectTrack(event.target.value); }}>{tracks.map((track) => <option key={track.id} value={track.id}>{track.name} · {getAudioClassificationLabel(track.classification)}</option>)}</select></label>
         ) : null}
         <audio ref={audioRef} controls preload="metadata" aria-label={selected.ariaLabel ?? selected.name} onError={() => setErrorMessage("音频暂时无法加载或播放，请继续浏览文字和其他数字体验。")} />
+        {playNotice ? <p className="audio-play-notice" role="status">{playNotice}</p> : null}
       </div>
     </div>
   );
