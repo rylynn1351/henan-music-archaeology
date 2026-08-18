@@ -115,6 +115,8 @@ export type Artifact = {
   highlights?: ArtifactHighlight[];
   images?: ArtifactImage[];
   timeline?: TimelineItem[];
+  timelineBreakAfter?: number;
+  timelineBreakLabel?: string;
   sources?: SourceReference[];
   questions?: GuideQuestion[];
   model?: ArtifactModel;

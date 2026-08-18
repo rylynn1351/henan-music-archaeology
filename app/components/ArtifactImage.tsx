@@ -9,6 +9,7 @@ type ArtifactImageProps = {
   sizes: string;
   fallbackText: string;
   fallbackClassName: string;
+  priority?: boolean;
 };
 
 export default function ArtifactImage({
@@ -16,6 +17,7 @@ export default function ArtifactImage({
   sizes,
   fallbackText,
   fallbackClassName,
+  priority = false,
 }: ArtifactImageProps) {
   const [failedSrc, setFailedSrc] = useState<string>();
   const hasFailed = Boolean(image && failedSrc === image.src);
@@ -44,7 +46,7 @@ export default function ArtifactImage({
       width={image.width ?? 4}
       height={image.height ?? 3}
       sizes={sizes}
-      loading="lazy"
+      loading={priority ? "eager" : "lazy"}
       unoptimized
       onError={() => setFailedSrc(image.src)}
     />

@@ -2,7 +2,8 @@ export const MEMORIAL_CARD = {
   projectName: "豫音焕新声",
   projectSubtitle: "河南音乐考古数字展示",
   slogan: "让河南音乐文物重新发声",
-  footer: "郑州大学 2026 大学生创新训练计划",
+  disclaimer: "数字展示纪念内容 · 不替代正式考古资料与研究结论",
+  footer: "豫音焕新声 · 郑州大学 2026 大学生创新训练计划",
   seal: "豫",
 } as const;
 
@@ -19,7 +20,9 @@ export const MEMORIAL_CARD_PALETTE = {
 } as const;
 
 export function formatMemorialDate(date: Date): string {
-  return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `生成于 ${date.getFullYear()}.${month}.${day}`;
 }
 
 export function composeMemorialNicknameLine(nickname?: string): string {
