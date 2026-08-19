@@ -2,7 +2,7 @@
 
 ## 1. 文档说明
 
-本文依据 2026-08-17 的实际仓库和 v0.5 收口版本编写，用于说明当前已经运行的页面、数据、交互、降级、测试和接入架构。
+本文依据 2026-08-19 的实际仓库和 v0.5 页面与交互完善版本编写，用于说明当前已经运行的页面、数据、交互、降级、测试和接入架构。
 
 当前项目仍采用单体前端与 TypeScript 静态数据，不引入正式数据库、微服务、用户系统或联网大模型。所有演示模型、合成声音和占位内容都必须显式标注，不得替代考古资料审核。
 
@@ -48,6 +48,7 @@
 │  │  ├─ ArtifactAudioPlayer.tsx      # 通用音频播放器
 │  │  ├─ ArtifactWaveform.tsx         # 解码与交互波形
 │  │  ├─ ArtifactGuide.tsx            # 本地问答界面
+│  │  ├─ ArtifactTimeline.tsx         # 交互时间轴与事件总览
 │  │  ├─ ArtifactCommemorativeCard.tsx# 数字纪念卡
 │  │  ├─ ArtifactImage.tsx            # 图片降级
 │  │  └─ ModuleErrorBoundary.tsx      # 模块错误隔离
@@ -97,6 +98,7 @@ flowchart TD
     ROUTE --> PLACEHOLDER["ArtifactComingSoon"]
     ROUTE --> EXPERIENCE["ArtifactExperience"]
     EXPERIENCE --> DETAIL["ArtifactDetail"]
+    EXPERIENCE --> TIMELINE["ArtifactTimeline"]
     EXPERIENCE --> MODEL["ArtifactModelViewer"]
     EXPERIENCE --> AUDIO["ArtifactAudioPlayer"]
     AUDIO --> WAVE["ArtifactWaveform"]
@@ -105,7 +107,11 @@ flowchart TD
     EXPERIENCE --> BOUNDARY["ModuleErrorBoundary"]
 ```
 
-3D、音频、波形、问答和纪念卡已经从整页组件中拆分。`ArtifactExperience` 负责读取当前文物的可选模块并编排状态，不直接实现底层渲染。
+时间轴、3D、音频、波形、问答和纪念卡已经从整页组件中拆分。`ArtifactExperience` 负责读取当前文物的可选模块并编排状态，不直接实现底层渲染。
+
+### 历史回响模块
+
+`ArtifactTimeline` 读取 `Artifact.timeline`，并使用可选的 `timelineBreakAfter`、`timelineBreakLabel` 描述时间断层。组件在同一章节主体内管理两种互斥视图：默认交互时间轴和完整事件档案总览；桌面端使用横向时间轴/多栏总览，窄屏使用纵向时间轴/列表。Hover、键盘聚焦和移动端轻触只控制临时详情，不保存固定节点状态。
 
 ## 6. 数据注册、查询与发布边界
 
@@ -193,12 +199,15 @@ flowchart LR
 
 ## 11. 数字纪念卡架构
 
-`ArtifactCommemorativeCard` 在浏览器本地使用 Canvas 生成 3:4 PNG：
+`ArtifactCommemorativeCard` 在浏览器本地使用 Canvas 生成 8:9 PNG：
 
 - 使用当前文物名称、项目品牌和已登记主图；
 - 文本测量、换行、缩放、截断和文件名逻辑位于 `memorial-card-text.ts`；
 - 可选昵称仅存在组件内存中，不上传、不持久化；
 - 不把年代、材质、用途等专业字段自动写入纪念卡；
+- 同一份 Data URL 同时用于弹窗预览、沉浸式正反面展示和 PNG 下载，避免重复生成不同内容；
+- 沉浸式预览使用 CSS 3D 组织正反面，支持自动旋转、指针拖动、释放后的惯性过渡、键盘旋转和 `prefers-reduced-motion`；
+- 背面只使用项目名称、项目副标题和项目页脚，不增加文物事实；
 - 弹窗包含焦点循环、Escape 关闭、关闭后恢复焦点和错误提示；
 - 图片、Canvas 或下载失败不会影响详情其他模块。
 
@@ -258,6 +267,7 @@ npm run verify
 - 波形包络、细柱几何、缓存、定位和失败；
 - 热点音频联动、播放提示与 Object URL 生命周期；
 - 纪念卡文本布局、焦点循环、Data URL 和安全字段边界；
+- 时间轴双视图、断轴、移动端状态和纪念卡 3D 预览源码契约；
 - 关键模块源码契约和降级结构。
 
 `.github/workflows/quality.yml` 在 Node.js 22 上执行 `npm ci` 和 `npm run verify`。

@@ -16,11 +16,19 @@ type ArtifactDetailProps = {
 export default function ArtifactDetail({ artifact, sources }: ArtifactDetailProps) {
   const primaryImage = getPrimaryImage(artifact);
   const facts = getArtifactDisplayFacts(artifact);
+  const themeTitle = artifact.subtitle ?? artifact.name;
+  const titleCommaIndex = themeTitle.indexOf("，");
+  const themeTitleLines = titleCommaIndex >= 0
+    ? [themeTitle.slice(0, titleCommaIndex + 1), themeTitle.slice(titleCommaIndex + 1)]
+    : [themeTitle];
 
   return (
     <section className="section artifact-section" id="artifact">
-      <div className="section-heading split-heading">
-        <div><span className="eyebrow">01 · 文物档案</span><h2>{artifact.name}</h2></div>
+      <div className="section-heading stacked-heading artifact-detail-heading">
+        <span className="eyebrow">01 · 文物档案</span>
+        <h2 className="semantic-heading">
+          {themeTitleLines.map((line) => <span key={line}>{line}</span>)}
+        </h2>
         {artifact.summary ? <p>{artifact.summary}</p> : null}
       </div>
       <div className="artifact-grid">
@@ -42,7 +50,7 @@ export default function ArtifactDetail({ artifact, sources }: ArtifactDetailProp
         </figure>
         <div className="artifact-details">
           {artifact.displayIndex ? <span className="big-index">NO. {artifact.displayIndex}</span> : null}
-          {artifact.subtitle ? <h3>{artifact.subtitle}</h3> : null}
+          <h3 className="artifact-identity-name">{artifact.name}</h3>
           {facts.length > 0 ? (
             <dl>
               {facts.map((fact) => (

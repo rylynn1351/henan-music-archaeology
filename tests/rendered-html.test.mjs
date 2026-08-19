@@ -243,6 +243,7 @@ test("server-renders the standalone artifact catalog", async () => {
   assert.match(html, /当前结果/);
   assert.match(html, /data-artifact-count="3"/);
   assert.match(html, /data-filtered-artifact-count="3"/);
+  assert.match(html, /← 返回首页/);
   assert.match(html, /项目首页/);
   assert.match(html, /href="\/"/);
   assert.match(html, /href="\/artifacts\/jiahu-bone-flute"/);
@@ -335,6 +336,7 @@ test("keeps artifact data, sources, warnings, and assets explicit", async () => 
     waveformComponent,
     audioWaveformUtils,
     guideComponent,
+    timelineComponent,
     memorialCardComponent,
     memorialCardText,
     viteConfig,
@@ -359,6 +361,7 @@ test("keeps artifact data, sources, warnings, and assets explicit", async () => 
     readFile(new URL("../app/components/ArtifactWaveform.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/audio-waveform.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/components/ArtifactGuide.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/components/ArtifactTimeline.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/components/ArtifactCommemorativeCard.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/memorial-card-text.ts", import.meta.url), "utf8"),
     readFile(new URL("../vite.config.ts", import.meta.url), "utf8"),
@@ -383,6 +386,8 @@ test("keeps artifact data, sources, warnings, and assets explicit", async () => 
   assert.match(card, /getReviewStatusLabel/);
   assert.match(card, /encodeURIComponent\(artifact\.slug\)/);
   assert.match(card, /<Link/);
+  assert.match(card, /artifact-card-action motion-cta/);
+  assert.match(card, /motion-cta-label/);
   assert.match(overview, /filteredArtifacts\.map/);
   assert.match(overview, /暂无可展示文物/);
   assert.match(overview, /filterArtifacts/);
@@ -396,11 +401,17 @@ test("keeps artifact data, sources, warnings, and assets explicit", async () => 
   assert.match(homePage, /getCatalogArtifacts/);
   assert.match(homePage, /ArtifactCard/);
   assert.match(homePage, /href="\/artifacts"/);
+  assert.match(homePage, /motion-cta hero-explore-action/);
+  assert.match(homePage, /<span>从一件文物，<\/span>/);
+  assert.match(homePage, /<span>建立可扩展的数字档案<\/span>/);
   assert.doesNotMatch(homePage, /ArtifactDetail|OrbitControls|createDemoWave|GuideChat/);
   assert.match(catalogPage, /ArtifactOverview/);
   assert.match(catalogPage, /getCatalogArtifacts/);
   assert.match(catalogPage, /title: "文物总览"/);
   assert.match(experience, /ArtifactDetail/);
+  assert.match(experience, /className="site-header artifact-site-header"/);
+  assert.match(experience, /artifact-route-hero-visual/);
+  assert.match(experience, /image=\{primaryImage\}/);
   assert.match(experience, /lazy\(\(\) => import\("\.\/components\/ArtifactModelViewer"\)\)/);
   assert.match(modelViewer, /GLTFLoader/);
   assert.match(modelViewer, /data-module-fallback="3d"/);
@@ -408,9 +419,24 @@ test("keeps artifact data, sources, warnings, and assets explicit", async () => 
   assert.match(audioPlayer, /URL\.revokeObjectURL/);
   assert.match(audioPlayer, /data-module-fallback="audio"/);
   assert.match(guideComponent, /data-module-fallback="guide"/);
-  assert.match(experience, /时间线资料待补充/);
+  assert.match(experience, /ArtifactTimeline/);
+  assert.match(timelineComponent, /时间线资料待补充/);
+  assert.match(timelineComponent, /查看全部事件/);
+  assert.match(timelineComponent, /compactActiveId/);
+  assert.match(timelineComponent, /data-mode=\{showAll \? "archive" : "timeline"\}/);
+  assert.match(timelineComponent, /← 返回时间轴/);
+  assert.match(timelineComponent, /timeline-archive-view/);
+  assert.match(timelineComponent, /String\(index \+ 1\)\.padStart\(2, "0"\)/);
+  assert.match(timelineComponent, /\{isActive \? \(/);
+  assert.match(timelineComponent, /timeline-break/);
+  assert.match(timelineComponent, /items\.map/);
+  assert.doesNotMatch(timelineComponent, /pinnedId|setPinnedId|timeline-complete-list|timeline-popover-meta|data-static|已固定/);
+  assert.doesNotMatch(experience, /jiahu-timeline|贾湖先民生活于此/);
   assert.match(experience, /资料来源待团队提供/);
   assert.match(experience, /05 · 资料来源/);
+  assert.match(experience, /<span>看见形制，<\/span><span>听见想象<\/span>/);
+  assert.match(detail, /themeTitleLines/);
+  assert.match(detail, /artifact-identity-name/);
   assert.doesNotMatch(experience, /opensource-note|OPEN SOURCE FOUNDATION|AlumNet|Three\.js \/ MIT/);
   assert.match(experience, /ModuleErrorBoundary/);
   assert.match(routePage, /getDisplayableArtifactBySlug/);
@@ -474,7 +500,29 @@ test("keeps artifact data, sources, warnings, and assets explicit", async () => 
   assert.match(memorialCardComponent, /MemorialCardFallback/);
   assert.match(memorialCardComponent, /canvasError/);
   assert.match(memorialCardComponent, /downloadError/);
+  assert.match(memorialCardComponent, /data-ready=\{previewReady\}/);
+  assert.match(memorialCardComponent, /生成数字纪念卡/);
+  assert.match(memorialCardComponent, /预览纪念卡/);
+  assert.match(memorialCardComponent, /memorial-immersive-backdrop/);
+  assert.match(memorialCardComponent, /memorial-card-3d-stage/);
+  assert.match(memorialCardComponent, /handleCardPointerMove/);
+  assert.match(memorialCardComponent, /requestAnimationFrame/);
+  assert.match(memorialCardComponent, /AUTO_ROTATION_SPEED/);
+  assert.match(memorialCardComponent, /angularVelocityRef/);
+  assert.match(memorialCardComponent, /INERTIA_BLEND_MS/);
+  assert.match(memorialCardComponent, /rotateY\(\$\{cardRotation\}deg\)/);
+  assert.match(memorialCardComponent, /memorial-card-idle-shell/);
+  assert.match(memorialCardComponent, /memorial-card-back/);
+  assert.match(memorialCardComponent, /退出预览/);
+  assert.match(memorialCardComponent, /setPreviewDataUrl\(dataUrl\)/);
+  assert.doesNotMatch(memorialCardComponent, /const disclaimerLine/);
+  assert.doesNotMatch(memorialCardComponent, /className="memorial-close"/);
   assert.match(memorialCardComponent, /primaryImage\?\.caption/);
+  assert.match(memorialCardComponent, /const CARD_WIDTH = 1280/);
+  assert.match(memorialCardComponent, /Math\.min\(imageWidth \/ source\.naturalWidth/);
+  assert.match(memorialCardComponent, /artifact\.subtitle/);
+  assert.match(memorialCardComponent, /artifact\.displayIndex/);
+  assert.match(memorialCardText, /disclaimer:/);
   assert.doesNotMatch(memorialCardComponent, /localStorage|setItem|upload|fetch\(/);
   assert.doesNotMatch(memorialCardComponent, /artifact\.(period|material|dateDescription|reviewStatus)/);
   assert.match(experience, /MemorialCardFallback/);
@@ -929,7 +977,7 @@ test("builds responsive centered waveform bars with bounded playback progress", 
 test("composes memorial card text and filenames", () => {
   assert.equal(MEMORIAL_CARD.projectName, "豫音焕新声");
   assert.equal(MEMORIAL_CARD.seal, "豫");
-  assert.equal(formatMemorialDate(new Date(2026, 7, 16)), "2026年8月16日");
+  assert.equal(formatMemorialDate(new Date(2026, 7, 16)), "生成于 2026.08.16");
   assert.equal(composeMemorialNicknameLine(), "");
   assert.equal(composeMemorialNicknameLine("  小明  "), "致 · 小明");
   assert.equal(sanitizeMemorialSlug("Jiahu Bone Flute!"), "jiahu-bone-flute");

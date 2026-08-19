@@ -36,7 +36,9 @@ export default function HeritageDemo() {
             让河南音乐考古资源被更多人看见、听见、理解。
           </p>
           <div className="hero-actions">
-            <Link className="button primary" href="/artifacts">开始探索 <span>→</span></Link>
+            <Link className="button primary motion-cta hero-explore-action" href="/artifacts">
+              <span className="motion-cta-label">开始探索</span><span className="motion-cta-arrow" aria-hidden="true">→</span>
+            </Link>
             <Link className="button ghost" href={featuredDetailHref}>查看重点文物</Link>
           </div>
           <div className="hero-stats">
@@ -54,7 +56,10 @@ export default function HeritageDemo() {
         <div className="section-heading split-heading">
           <div>
             <span className="eyebrow">文物精选 · COLLECTION</span>
-            <h2 id="home-preview-title">从一件文物，建立可扩展的数字档案</h2>
+            <h2 id="home-preview-title" className="semantic-heading">
+              <span>从一件文物，</span>
+              <span>建立可扩展的数字档案</span>
+            </h2>
           </div>
           <Link className="button route-secondary" href="/artifacts">查看全部文物 <span aria-hidden="true">→</span></Link>
         </div>

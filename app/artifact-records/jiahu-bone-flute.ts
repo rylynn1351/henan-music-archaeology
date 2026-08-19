@@ -48,6 +48,8 @@ export const jiahuBoneFlute: Artifact = {
     { id: "jiahu-timeline-04", year: "1999 年", title: "研究发表于《Nature》", text: "张居中等公布六支完整骨笛及测音结果，贾湖骨笛由此受到国际学界广泛关注。" },
     { id: "jiahu-timeline-05", year: "今天", title: "让文物可见、可听、可探索", text: "数字展示让公众在不接触原件的前提下理解文物形制、历史语境与音乐价值。" },
   ],
+  timelineBreakAfter: 0,
+  timelineBreakLabel: "约九千年的时间跨度",
   sources: jiahuSources,
   questions: [
     { id: "jiahu-question-01", question: "贾湖骨笛是什么？", answer: "它是河南舞阳贾湖新石器时代遗址出土的一组骨质吹奏乐器。多件骨笛带有 5、6、7 或 8 个孔，部分完整标本经过实际测音研究。", keywords: ["是什么", "介绍"] },

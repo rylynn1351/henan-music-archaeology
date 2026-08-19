@@ -25,6 +25,7 @@ export default function ArtifactsPage() {
 
       <section className="catalog-page-hero" aria-labelledby="catalog-page-title">
         <div className="section catalog-page-hero-inner">
+          <Link className="artifact-route-back" href="/">← 返回首页</Link>
           <p className="hero-kicker">COLLECTION · CATALOG</p>
           <h1 id="catalog-page-title">文物总览</h1>
           <p>浏览已公开、演示或正在整理的文物，使用名称搜索与分类筛选。</p>
