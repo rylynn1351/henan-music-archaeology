@@ -697,7 +697,7 @@ export default function ArtifactCommemorativeCard({ artifact }: ArtifactCommemor
                             <span /><span /><span /><span /><span /><span /><span />
                           </div>
                           <div className="memorial-card-back-footer">
-                            <span>{artifact.displayIndex ? `数字档案 · NO. ${artifact.displayIndex}` : "数字文化概念验证 Demo"}</span>
+                            <span>{artifact.displayIndex ? `数字档案 · NO. ${artifact.displayIndex}` : "数字展示纪念内容"}</span>
                             <small>{MEMORIAL_CARD.footer}</small>
                           </div>
                         </div>

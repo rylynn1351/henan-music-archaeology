@@ -35,7 +35,7 @@ export default function ArtifactCard({ artifact }: ArtifactCardProps) {
           />
           <div className="artifact-card-badges">
             <span>{getReviewStatusLabel(artifact.reviewStatus)}</span>
-            {artifact.isDemo ? <span className="demo">Demo</span> : null}
+            {artifact.isDemo ? <span className="archive">数字档案</span> : null}
           </div>
         </div>
 

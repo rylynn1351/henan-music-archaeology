@@ -21,6 +21,7 @@ import {
   getSourcesForArtifact,
   validateArtifactCatalog,
 } from "../app/heritage-data.ts";
+import { getArtifactHeroHighlights } from "../app/hero-utils.ts";
 import {
   GUIDE_NO_MATCH_ANSWER,
   getLocalGuideAnswer,
@@ -121,6 +122,35 @@ function createTestArtifact(overrides = {}) {
   };
 }
 
+test("builds artifact hero highlights without inventing missing facts", () => {
+  const explicit = getArtifactHeroHighlights(createTestArtifact({
+    highlights: [
+      { value: "亮点一", label: "说明一" },
+      { value: "亮点二", label: "说明二" },
+      { value: "亮点三", label: "说明三" },
+      { value: "亮点四", label: "说明四" },
+    ],
+  }));
+  assert.equal(explicit.length, 3);
+  assert.equal(explicit[0].value, "亮点一");
+
+  assert.deepEqual(
+    getArtifactHeroHighlights(createTestArtifact({ highlights: undefined })),
+    [
+      { value: "测试时期", label: "· 时代" },
+      { value: "测试材质", label: "· 材质" },
+      { value: "测试类型", label: "· 器物类型" },
+    ],
+  );
+
+  assert.deepEqual(getArtifactHeroHighlights(createTestArtifact({
+    highlights: undefined,
+    period: undefined,
+    material: undefined,
+    artifactType: undefined,
+  })), []);
+});
+
 async function render(pathname = "/") {
   const workerUrl = new URL("../dist/server/index.js", import.meta.url);
   workerUrl.searchParams.set("test", `${process.pid}-${Date.now()}`);
@@ -142,22 +172,30 @@ async function render(pathname = "/") {
   );
 }
 
-test("server-renders the Jiahu heritage demo", async () => {
+test("server-renders the project brand homepage", async () => {
   const response = await render();
   assert.equal(response.status, 200);
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
 
   const html = await response.text();
   const visibleDocument = html.split('<script id="_R_">')[0];
-  assert.match(html, /<title>贾湖骨笛数字展示｜豫音焕新声<\/title>/);
-  assert.match(html, /property="og:title" content="豫音焕新声｜贾湖骨笛数字展示"/);
+  assert.match(html, /<title>河南音乐考古数字展示｜豫音焕新声<\/title>/);
+  assert.match(html, /property="og:title" content="豫音焕新声｜河南音乐考古数字展示"/);
   assert.match(html, /property="og:locale" content="zh_CN"/);
   assert.match(html, /豫音焕新声/);
-  assert.match(html, /贾湖骨笛/);
-  assert.match(html, /2026 大学生创新训练计划/);
+  assert.doesNotMatch(html, /2026 大学生创新训练计划|v0\.3 多文物展示|内容待音乐学、考古学成员持续审校/);
+  assert.match(html, /让河南音乐文物重新发声/);
+  assert.match(html, /数字档案/);
+  assert.match(html, /多模态展示/);
+  assert.match(html, /资料来源/);
+  assert.match(html, /可核验/);
+  assert.match(html, /project-hero-visual/);
+  assert.match(html, /河南音乐考古数字展示平台/);
+  assert.match(html, /数字档案 · 互动展陈 · 资料溯源/);
+  assert.match(html, /href="\/artifacts"[^>]*>[^<]*<span[^>]*>浏览文物/);
+  assert.match(html, /href="#artifacts"[^>]*>了解项目/);
+  assert.doesNotMatch(html, /一管骨笛|九千年回响|从贾湖出土的一件音乐文物出发/);
   assert.doesNotMatch(html, /项目概念验证/);
-  assert.match(html, /多种孔数/);
-  assert.match(html, /形制丰富/);
   assert.doesNotMatch(html, /当前为概念验证Demo/);
   assert.match(html, /文物总览/);
   assert.match(html, /查看全部文物/);
@@ -168,6 +206,7 @@ test("server-renders the Jiahu heritage demo", async () => {
   assert.match(html, /待公布文物 003/);
   assert.match(html, /查看整理进度/);
   assert.match(html, /待专业成员审核/);
+  assert.doesNotMatch(visibleDocument, />Demo</);
   assert.doesNotMatch(html, /名称搜索|按年代或时期筛选|按材质筛选|按器物类型筛选|重置筛选|没有找到匹配的文物/);
   assert.doesNotMatch(html, /id="artifact"|id="timeline"|id="experience"|id="guide"/);
   assert.doesNotMatch(html, /内容审核状态|最后更新时间|数字讲解员/);
@@ -217,6 +256,13 @@ test("server-renders a displayable artifact from its standalone slug route", asy
   assert.match(html, /贾湖骨笛/);
   assert.match(html, /返回文物总览/);
   assert.match(html, /href="\/artifacts"/);
+  assert.match(html, /data-hero-variant="artifact"/);
+  assert.match(html, /href="#artifact"/);
+  assert.match(html, /查看文物档案/);
+  assert.match(html, /href="#experience"/);
+  assert.match(html, /进入数字体验/);
+  assert.match(html, /约 9000/);
+  assert.match(html, /\/jiahu-bone-flute\.jpg/);
   assert.match(html, /内容分类/);
   assert.match(html, /考古事实/);
   assert.match(html, /内容审核状态/);
@@ -224,8 +270,11 @@ test("server-renders a displayable artifact from its standalone slug route", asy
   assert.match(html, /资料来源/);
   assert.doesNotMatch(html, /当前为概念验证Demo/);
   assert.match(html, /贾湖骨笛(?:<!-- -->)? · 交互模型/);
-  assert.match(html, /合成音色占位演示/);
+  assert.match(html, /听见远古 · 数字合成音景/);
   assert.match(html, /数字讲解员/);
+  assert.match(html, /循着资料/);
+  assert.match(html, /文物资料库已载入/);
+  assert.doesNotMatch(html, /v0\.4 多文物框架|内容待专业成员持续审校|本地知识演示/);
   assert.doesNotMatch(html, /文物总览 · COLLECTION/);
 });
 
@@ -254,11 +303,11 @@ test("navigates from home through the catalog to a detail page and back", async 
   const homeHtml = await (await render("/")).text();
   assert.match(homeHtml, /href="\/artifacts"/);
   assert.match(homeHtml, /查看全部文物/);
-  assert.match(homeHtml, /开始探索/);
+  assert.match(homeHtml, /浏览文物/);
 
   const catalogHtml = await (await render("/artifacts")).text();
   assert.match(catalogHtml, /href="\/artifacts\/jiahu-bone-flute"/);
-  assert.doesNotMatch(catalogHtml, /开始探索/);
+  assert.doesNotMatch(catalogHtml, /开始探索|浏览文物/);
 
   const detailHtml = await (await render("/artifacts/jiahu-bone-flute")).text();
   assert.match(detailHtml, /返回文物总览/);
@@ -318,6 +367,8 @@ test("keeps artifact data, sources, warnings, and assets explicit", async () => 
   const [
     data,
     homePage,
+    heroComponent,
+    heroStyles,
     experience,
     detail,
     card,
@@ -343,6 +394,8 @@ test("keeps artifact data, sources, warnings, and assets explicit", async () => 
   ] = await Promise.all([
     readFile(new URL("../app/heritage-data.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/HeritageDemo.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/components/HeritageHero.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
     readFile(new URL("../app/ArtifactExperience.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/ArtifactDetail.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/components/ArtifactCard.tsx", import.meta.url), "utf8"),
@@ -400,8 +453,16 @@ test("keeps artifact data, sources, warnings, and assets explicit", async () => 
   assert.doesNotMatch(homePage, /ArtifactOverview/);
   assert.match(homePage, /getCatalogArtifacts/);
   assert.match(homePage, /ArtifactCard/);
+  assert.match(homePage, /HeritageHero/);
   assert.match(homePage, /href="\/artifacts"/);
-  assert.match(homePage, /motion-cta hero-explore-action/);
+  assert.match(heroComponent, /motion-cta hero-explore-action/);
+  assert.match(heroComponent, /fallbackClassName="hero-image-fallback"/);
+  assert.match(heroComponent, /data-hero-variant/);
+  assert.match(heroComponent, /project-hero-visual/);
+  assert.match(heroComponent, /aria-hidden="true"/);
+  assert.match(heroComponent, /badge \?/);
+  assert.match(heroStyles, /overflow-wrap: anywhere/);
+  assert.match(heroStyles, /prefers-reduced-motion/);
   assert.match(homePage, /<span>从一件文物，<\/span>/);
   assert.match(homePage, /<span>建立可扩展的数字档案<\/span>/);
   assert.doesNotMatch(homePage, /ArtifactDetail|OrbitControls|createDemoWave|GuideChat/);
@@ -410,7 +471,8 @@ test("keeps artifact data, sources, warnings, and assets explicit", async () => 
   assert.match(catalogPage, /title: "文物总览"/);
   assert.match(experience, /ArtifactDetail/);
   assert.match(experience, /className="site-header artifact-site-header"/);
-  assert.match(experience, /artifact-route-hero-visual/);
+  assert.match(experience, /<HeritageHero/);
+  assert.match(experience, /getArtifactHeroHighlights/);
   assert.match(experience, /image=\{primaryImage\}/);
   assert.match(experience, /lazy\(\(\) => import\("\.\/components\/ArtifactModelViewer"\)\)/);
   assert.match(modelViewer, /GLTFLoader/);
@@ -432,9 +494,12 @@ test("keeps artifact data, sources, warnings, and assets explicit", async () => 
   assert.match(timelineComponent, /items\.map/);
   assert.doesNotMatch(timelineComponent, /pinnedId|setPinnedId|timeline-complete-list|timeline-popover-meta|data-static|已固定/);
   assert.doesNotMatch(experience, /jiahu-timeline|贾湖先民生活于此/);
-  assert.match(experience, /资料来源待团队提供/);
+  assert.match(experience, /暂无可公开的资料来源/);
   assert.match(experience, /05 · 资料来源/);
   assert.match(experience, /<span>看见形制，<\/span><span>听见想象<\/span>/);
+  assert.match(experience, /循着资料/);
+  assert.match(experience, /<SiteFooter/);
+  assert.doesNotMatch(experience, /资料接入|替换为团队提供的授权 GLB|安全降级|本地问答验证交互/);
   assert.match(detail, /themeTitleLines/);
   assert.match(detail, /artifact-identity-name/);
   assert.doesNotMatch(experience, /opensource-note|OPEN SOURCE FOUNDATION|AlumNet|Three\.js \/ MIT/);
@@ -448,6 +513,8 @@ test("keeps artifact data, sources, warnings, and assets explicit", async () => 
   assert.match(routeErrorPage, /文物资料暂时无法读取/);
   assert.match(routeErrorPage, /href="\/artifacts"/);
   assert.match(jiahuRecord, /非文物扫描/);
+  assert.match(jiahuRecord, /数字合成音景/);
+  assert.doesNotMatch(jiahuRecord, /占位演示|验证播放/);
   assert.match(jiahuRecord, /不是贾湖骨笛原件或复原件录音/);
   assert.doesNotMatch(jiahuRecord, /jiahu-demo-hotspot/);
   assert.match(modelViewer, /model-hotspot-layer/);
@@ -1083,7 +1150,7 @@ test("builds playback notices that label synthetic audio without overstating it"
   const synthetic = { id: "a", name: "合成", classification: "digitally_synthesized", isBrowserGenerated: true };
   const blocked = buildPlaybackNotice(Object.assign(new Error("blocked"), { name: "NotAllowedError" }), synthetic);
   assert.match(blocked, /浏览器阻止了自动播放/);
-  assert.match(blocked, /数字合成演示音效，非原器或复原乐器录音/);
+  assert.match(blocked, /数字合成音景，非原器或复原乐器录音/);
   assert.doesNotMatch(blocked, /真实音色|原件录音/);
 
   const failed = buildPlaybackNotice(
@@ -1091,7 +1158,7 @@ test("builds playback notices that label synthetic audio without overstating it"
     { id: "b", name: "文件", classification: "reconstructed_instrument", isBrowserGenerated: false },
   );
   assert.match(failed, /音频未能开始播放/);
-  assert.doesNotMatch(failed, /数字合成演示音效/);
+  assert.doesNotMatch(failed, /数字合成音景/);
 
   assert.equal(buildPlaybackNotice(Object.assign(new Error("interrupted"), { name: "AbortError" }), synthetic), undefined);
   assert.match(buildPlaybackNotice("unexpected", synthetic), /音频未能开始播放/);

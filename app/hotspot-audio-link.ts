@@ -67,7 +67,7 @@ export function buildPlaybackNotice(
     errorName === "NotAllowedError"
       ? "浏览器阻止了自动播放，请点击下方播放按钮继续试听"
       : "音频未能开始播放，请点击下方播放按钮重试";
-  const disclaimer = track?.classification === "digitally_synthesized" ? "（数字合成演示音效，非原器或复原乐器录音）" : "";
+  const disclaimer = track?.classification === "digitally_synthesized" ? "（数字合成音景，非原器或复原乐器录音）" : "";
   return `${base}${disclaimer}。`;
 }
 

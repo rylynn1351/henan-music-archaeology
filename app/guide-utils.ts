@@ -1,7 +1,7 @@
 import type { GuideQuestion } from "./heritage-data";
 
 export const GUIDE_NO_MATCH_ANSWER =
-  "现有资料暂未收录该问题，请等待专业成员补充。你也可以试试下方的推荐问题。";
+  "当前文物资料尚未涵盖该问题，请尝试下方的推荐问题。";
 
 export function getLocalGuideAnswer(
   questions: readonly GuideQuestion[],

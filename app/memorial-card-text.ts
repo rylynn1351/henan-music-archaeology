@@ -3,7 +3,7 @@ export const MEMORIAL_CARD = {
   projectSubtitle: "河南音乐考古数字展示",
   slogan: "让河南音乐文物重新发声",
   disclaimer: "数字展示纪念内容 · 不替代正式考古资料与研究结论",
-  footer: "豫音焕新声 · 郑州大学 2026 大学生创新训练计划",
+  footer: "豫音焕新声 · 河南音乐考古数字展示",
   seal: "豫",
 } as const;
 

@@ -1,14 +1,17 @@
 import Link from "next/link";
 import ArtifactCard from "./components/ArtifactCard";
-import {
-  featuredArtifact,
-  getCatalogArtifacts,
-} from "./heritage-data";
+import HeritageHero from "./components/HeritageHero";
+import SiteFooter from "./components/SiteFooter";
+import { getCatalogArtifacts, type ArtifactHighlight } from "./heritage-data";
+
+const projectHighlights: ArtifactHighlight[] = [
+  { value: "文物档案", label: "· 持续建设" },
+  { value: "数字体验", label: "· 多模态展示" },
+  { value: "资料来源", label: "· 可核验" },
+];
 
 export default function HeritageDemo() {
   const catalogArtifacts = getCatalogArtifacts();
-  const highlights = featuredArtifact.highlights ?? [];
-  const featuredDetailHref = `/artifacts/${encodeURIComponent(featuredArtifact.slug)}`;
 
   return (
     <main>
@@ -24,33 +27,18 @@ export default function HeritageDemo() {
         <Link className="header-action" href="/artifacts">浏览文物</Link>
       </header>
 
-      <section className="hero" id="top">
-        <div className="hero-image" aria-hidden="true" />
-        <div className="hero-shade" />
-        <div className="hero-content">
-          <div className="project-badge"><span /> 2026 大学生创新训练计划</div>
-          <p className="hero-kicker">A DIGITAL ECHO OF ANCIENT HENAN</p>
-          <h1>一管骨笛<br /><em>九千年回响</em></h1>
-          <p className="hero-lead">
-            从贾湖出土的一件音乐文物出发，用数字叙事、3D 交互与可信讲解，
-            让河南音乐考古资源被更多人看见、听见、理解。
-          </p>
-          <div className="hero-actions">
-            <Link className="button primary motion-cta hero-explore-action" href="/artifacts">
-              <span className="motion-cta-label">开始探索</span><span className="motion-cta-arrow" aria-hidden="true">→</span>
-            </Link>
-            <Link className="button ghost" href={featuredDetailHref}>查看重点文物</Link>
-          </div>
-          <div className="hero-stats">
-            {highlights.map((highlight) => (
-              <div key={`${highlight.value}-${highlight.label}`}>
-                <strong>{highlight.value}</strong><span>{highlight.label}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="scroll-cue"><span /> 向下探索</div>
-      </section>
+      <HeritageHero
+        variant="project"
+        kicker="DIGITAL MUSIC ARCHAEOLOGY OF HENAN"
+        title="豫音焕新声"
+        accentTitle="让河南音乐文物重新发声"
+        description="以数字档案、交互体验与可核验资料为基础，让河南音乐考古资源被更多人看见、听见、理解。"
+        actions={[
+          { href: "/artifacts", label: "浏览文物", primary: true },
+          { href: "#artifacts", label: "了解项目" },
+        ]}
+        highlights={projectHighlights}
+      />
 
       <section className="section home-preview-section" id="artifacts" aria-labelledby="home-preview-title">
         <div className="section-heading split-heading">
@@ -68,14 +56,7 @@ export default function HeritageDemo() {
         </div>
       </section>
 
-      <footer>
-        <div className="brand footer-brand">
-          <span className="brand-seal">豫</span>
-          <span><strong>豫音焕新声</strong><small>让河南音乐文物重新发声</small></span>
-        </div>
-        <p>郑州大学 2026 大学生创新训练计划 · v0.3 多文物展示</p>
-        <span>内容待音乐学、考古学成员持续审校</span>
-      </footer>
+      <SiteFooter />
     </main>
   );
 }

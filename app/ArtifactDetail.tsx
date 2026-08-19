@@ -79,14 +79,14 @@ export default function ArtifactDetail({ artifact, sources }: ArtifactDetailProp
                       <a href={source.href} target="_blank" rel="noreferrer">{source.name}</a>
                     ) : source.name}
                   </span>
-                )) : "待团队提供"}
+                )) : "暂未收录"}
               </p>
             </div>
             <div>
               <span>最后更新时间</span>
               {artifact.updatedAt ? (
                 <time dateTime={artifact.updatedAt}>{artifact.updatedAt}</time>
-              ) : <span>待团队提供</span>}
+              ) : <span>暂未收录</span>}
             </div>
           </aside>
           {artifact.researchNote ? (
